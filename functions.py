@@ -8,6 +8,10 @@ Real = Union[np.ndarray, float]
 Function2D = Callable[[Real, Real], Real]
 
 
+def sum_squares(x: Real, y: Real) -> Real:
+    return x ** 2 + 2 * y ** 2
+
+
 def ackley(x: Real, y: Real) -> Real:
     terms = [
         - 20.0 * np.exp(-0.2 * np.sqrt(0.5 * (x ** 2 + y ** 2))),
@@ -47,7 +51,8 @@ def plot(fn: Function2D, x_max=5.12, n_points=100):
 
 
 if __name__ == '__main__':
-    print(rastrigin(0.0, 0.0))
+    print(sum_squares(0.0, 0.0))
     plot(fn=ackley, x_max=32.768)
     plot(fn=rosenbrock, x_max=32.768)
     plot(fn=rastrigin)
+    plot(fn=sum_squares)
