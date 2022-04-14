@@ -32,5 +32,12 @@ def rastrigin(x: Real, y: Real) -> Real:
     return 20 + term
 
 
+pool = [
+    [sum_squares, 32.768],
+    [ackley, 32.768],
+    [rosenbrock, 5.0],
+    [rastrigin, 5.0]
+]
+
 if __name__ == '__main__':
     print(sum_squares(0.0, 0.0))

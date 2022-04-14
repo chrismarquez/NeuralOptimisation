@@ -1,3 +1,5 @@
+import os.path
+
 import numpy as np
 from scipy.stats import qmc
 
@@ -17,5 +19,10 @@ def sobel_sample(fn: Function2D, sample_amount: int, x_max=1.0) -> np.ndarray:
 
 
 if __name__ == '__main__':
-    z = sobel_sample(functions.sum_squares, 16, x_max=4)
-    print(z)
+    for fn, x_max in functions.pool:
+        samples = sobel_sample(fn, sample_amount=2**15, x_max=x_max)
+        name = fn.__name__
+        path = "./samples/"
+        if not os.path.exists(path):
+            os.mkdir(path)
+        np.savetxt(f"samples/{name}.csv", X=samples, delimiter=",")
