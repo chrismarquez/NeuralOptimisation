@@ -5,7 +5,7 @@ import functions
 from functions import Function2D
 
 
-def plot_surface(fn: Function2D, x_max=5.12, n_points=100):
+def plot_surface(fn: Function2D, x_max=5.12, n_points=100) -> None:
     r_min, r_max = -x_max, x_max
     spacing = 2 * x_max / n_points
     xaxis = np.arange(r_min, r_max, spacing)
