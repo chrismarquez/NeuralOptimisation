@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Callable, Union
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 Real = Union[np.ndarray, float]
 Function2D = Callable[[Real, Real], Real]
@@ -33,26 +32,8 @@ def rastrigin(x: Real, y: Real) -> Real:
     return 20 + term
 
 
-def plot(fn: Function2D, x_max=5.12, n_points=100):
-    r_min, r_max = -x_max, x_max
-    spacing = 2 * x_max / n_points
-    xaxis = np.arange(r_min, r_max, spacing)
-    yaxis = np.arange(r_min, r_max, spacing)
-    x, y = np.meshgrid(xaxis, yaxis)
-    results: np.ndarray = fn(x, y)
-    figure = plt.figure()
-    axis = figure.gca(projection='3d')
-    axis.plot_surface(x, y, results, cmap='jet', shade="false")
-    plt.show()
-    # plt.contour(x, y, results)
-    # plt.show()
-    # plt.scatter(x, y, results)
-    # plt.show()
+
 
 
 if __name__ == '__main__':
     print(sum_squares(0.0, 0.0))
-    plot(fn=ackley, x_max=32.768)
-    plot(fn=rosenbrock, x_max=32.768)
-    plot(fn=rastrigin)
-    plot(fn=sum_squares)
