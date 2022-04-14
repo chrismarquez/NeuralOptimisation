@@ -32,8 +32,5 @@ def rastrigin(x: Real, y: Real) -> Real:
     return 20 + term
 
 
-
-
-
 if __name__ == '__main__':
     print(sum_squares(0.0, 0.0))
