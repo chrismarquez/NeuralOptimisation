@@ -1,11 +1,17 @@
 from __future__ import annotations
-from typing import Callable
+from typing import Callable, Union
 
 import numpy as np
-import matplotlib.pyplot as plt
+
+Real = Union[np.ndarray, float]
+Function2D = Callable[[Real, Real], Real]
 
 
-def ackley(x: np.ndarray | float, y: np.ndarray | float) -> np.ndarray | float:
+def sum_squares(x: Real, y: Real) -> Real:
+    return x ** 2 + 2 * y ** 2
+
+
+def ackley(x: Real, y: Real) -> Real:
     terms = [
         - 20.0 * np.exp(-0.2 * np.sqrt(0.5 * (x ** 2 + y ** 2))),
         - np.exp(0.5 * (np.cos(2 * np.pi * x) + np.cos(2 * np.pi * y))),
@@ -15,22 +21,23 @@ def ackley(x: np.ndarray | float, y: np.ndarray | float) -> np.ndarray | float:
     return sum(terms)
 
 
-def plot(fn: Callable[[np.ndarray | float, np.ndarray | float], np.ndarray | float]):
-    r_min, r_max = -32.768, 32.768
-    xaxis = np.arange(r_min, r_max, 2.0)
-    yaxis = np.arange(r_min, r_max, 2.0)
-    x, y = np.meshgrid(xaxis, yaxis)
-    results: np.ndarray = fn(x, y)
-    figure = plt.figure()
-    axis = figure.gca(projection='3d')
-    axis.plot_surface(x, y, results, cmap='jet', shade="false")
-    plt.show()
-    plt.contour(x, y, results)
-    plt.show()
-    plt.scatter(x, y, results)
-    plt.show()
+def rosenbrock(x: Real, y: Real):
+    a = 1
+    b = 100
+    return (a - x) ** 2 + b * (y - x ** 2) ** 2
 
+
+def rastrigin(x: Real, y: Real) -> Real:
+    term = x ** 2 + y ** 2 - 10 * (np.cos(2 * np.pi * x) + np.cos(2 * np.pi * y))
+    return 20 + term
+
+
+pool = [
+    [sum_squares, 10],
+    [ackley, 32.768],
+    [rosenbrock, 2.048],
+    [rastrigin, 5.12]
+]
 
 if __name__ == '__main__':
-    print(ackley(0.0, 0.0))
-    plot(fn=ackley)
+    print(sum_squares(0.0, 0.0))
