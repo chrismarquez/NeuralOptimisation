@@ -1,9 +1,68 @@
+from typing import List, Tuple
+
+import numpy as np
+import torch
+from tqdm import tqdm
 from torch import nn, optim
+
+Batch = Tuple[torch.Tensor, torch.Tensor]  # (Input Features, Output Labels)
+
+# TODO: Check tensor / ndarray types
 
 
 class Trainer:
 
-    def __init__(self, net: nn.Module):
-        loss_fn = nn.MSELoss()
-        learning_rate = 10E-3
-        optimiser = optim.SGD(net.parameters(), lr=learning_rate)
+    def __init__(self, net: nn.Module, loss_fn=nn.MSELoss(), lr=1E-4, batch_size=128):
+        self._device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self._net = net.to(self._device).double()
+        self._loss_fn = loss_fn
+        self._lr = lr
+        self._batch_size = batch_size
+        self._optimiser = optim.SGD(net.parameters(), lr=lr)
+
+    def train(self, x_train: np.ndarray, y_train: np.ndarray, epochs: int) -> nn.Module:
+        x_train, y_train = torch.tensor(x_train).to(self._device), torch.tensor(y_train).to(self._device)
+        batches = self._prepare_batches(x_train, y_train)
+        print("===================   Training Starts =======================\n")
+        print(f"\tEpochs: {epochs}, Batch Size: {self._batch_size}, LR: {self._lr}\n")
+        for i in tqdm(range(epochs)):
+            running_loss = self._train_epoch(batches)
+            if i % 20 == 0:
+                print(f"Loss: {running_loss}")
+        print("\n===================   Training Finished =====================\n")
+        return self._net
+
+    def save(self, name: str) -> None:
+        self._net.eval()
+        torch.save(self._net.state_dict(), f"./trained/{name}.pt")
+
+    def _train_epoch(self, batches: List[Batch]) -> float:
+        running_loss = 0.0
+        for input_set, target_set in batches:
+            running_loss += self._train_batch(input_set, target_set)
+        return running_loss
+
+    def _train_batch(self, input_set: torch.Tensor, target_set: torch.Tensor):
+        self._net.zero_grad()
+        output_set = self._net(input_set)
+        loss = self._loss_fn(output_set, target_set)
+        loss.backward()
+        self._optimiser.step()
+        return np.sqrt(loss.item())
+
+    def _prepare_batches(self, input_dataset: torch.Tensor, target_dataset: torch.Tensor) -> List[Batch]:
+        batch_count = len(target_dataset) // self._batch_size
+        batches: List[Batch] = [
+            (self._get_chunk(input_dataset, i), self._get_chunk(target_dataset, i))
+            for i in range(batch_count)
+        ]
+        if len(target_dataset) % self._batch_size != 0:  # Remaining batch
+            last_input = input_dataset[batch_count * self._batch_size:, :]
+            last_target = target_dataset[batch_count * self._batch_size:, :]
+            batches.append((last_input, last_target))
+        return batches
+
+    def _get_chunk(self, dataset: torch.Tensor, index: int) -> torch.Tensor:
+        start = index * self._batch_size
+        end = (index + 1) * self._batch_size
+        return dataset[start:end, :]
