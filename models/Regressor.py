@@ -15,8 +15,9 @@ class Regressor:
             output: torch.Tensor = self._net(x_predict.to(self._device))
             return output.detach().cpu().numpy()
 
-    def evaluate(self, x_test: torch.Tensor, y_target: torch.Tensor) -> float:
+    def evaluate(self, x_test: torch.Tensor, y_target: torch.Tensor) -> (float, float):
         y_predicted = self.predict(x_test)
         y_target = y_target.detach().cpu().numpy()
         error = metrics.mean_squared_error(y_target, y_predicted, squared=False)
-        return error
+        r2 = metrics.r2_score(y_target, y_predicted)
+        return error, r2

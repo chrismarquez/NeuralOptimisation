@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 import numpy as np
 import torch
-from tqdm import trange
+from tqdm.auto import trange
 from torch import nn, optim
 
 Batch = Tuple[torch.Tensor, torch.Tensor]
@@ -23,7 +23,7 @@ class Trainer:
         x_train, y_train = torch.tensor(x_train).to(self._device), torch.tensor(y_train).to(self._device)
         batches = self._prepare_batches(x_train, y_train)
         # print(f"\tEpochs: {epochs}, Batch Size: {self._batch_size}, LR: {self._lr}\n")
-        with trange(epochs, unit="epoch") as progress:
+        with trange(epochs, unit="epoch", leave=True) as progress:
             lr = "%.2E" % Decimal(self._lr)
             progress.set_description(f"Training Model: LR [{lr}] BS [{self._batch_size}] {details}")
             for _ in progress:

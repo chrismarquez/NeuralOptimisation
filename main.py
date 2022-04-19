@@ -1,7 +1,6 @@
-import numpy
 import numpy as np
-import torch
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, ParameterGrid
+
 from torch import nn
 
 from Estimator import Estimator
@@ -19,37 +18,49 @@ def train(dataset):
     return trained_net
 
 
-def hyperparameter_search(x_train: np.ndarray, y_train: np.ndarray):
+
+
+def hyperparameter_search(x_train: np.ndarray, y_train: np.ndarray, hyper_params):
     # np.exp(numpy.linspace(np.log(10E-4), np.log(10E-6), 3))
+
+
+    grid = ParameterGrid(hyper_params)
+    runs = len(list(grid))
+
+    estimator = Estimator()
+    searcher = GridSearchCV(estimator, param_grid=hyper_params, scoring=Estimator.score, cv=2, n_jobs=4, verbose=10)
+    searcher.fit(x_train, y_train)
+
+
+def main():
+    raw_dataset = np.loadtxt("samples/sum_squares.csv", delimiter=",")
+    dataset = Dataset.create(raw_dataset)
+    x_train, y_train = dataset.train
+
     hyper_params = {
         "learning_rate": [1E-4, 1E-5, 1E-6],  # Evenly spaced lr in log scale
         "batch_size": [32, 128, 512],
         "network_size": [25, 50, 75],
         "depth": [2, 3, 4],
-        "activation_fn": [lambda: nn.ReLU(), lambda: nn.Tanh()]
+        "activation_fn": ["ReLU", "Tanh"],
+        "should_save": [True]
     }
 
-    estimator = Estimator()
+    dummy_params = {
+        "learning_rate": [1E-4],  # Evenly spaced lr in log scale
+        "batch_size": [512],
+        "network_size": [25],
+        "depth": [2],
+        "activation_fn": ["ReLU", "Tanh"],
+        "should_save": [True]
+    }
 
-    searcher = GridSearchCV(estimator, param_grid=hyper_params, scoring="neg_mean_squared_error", cv=2)
+    # trained_net = train(dataset)
 
-    searcher.fit(x_train, y_train)
+    # trained_net = FNN()
+    # trained_net.load_state_dict(torch.load("trained/sum_squares.pt"))
 
-    print(searcher)
-
-
-def main():
-
-    raw_dataset = np.loadtxt("samples/sum_squares.csv", delimiter=",")
-    dataset = Dataset.create(raw_dataset)
-    x_train, y_train = dataset.train
-
-    #trained_net = train(dataset)
-
-    #trained_net = FNN()
-    #trained_net.load_state_dict(torch.load("trained/sum_squares.pt"))
-
-    hyperparameter_search(x_train, y_train)
+    hyperparameter_search(x_train, y_train, dummy_params)
 
     return
 
