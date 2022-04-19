@@ -1,3 +1,4 @@
+import os
 from decimal import Decimal
 from typing import List, Tuple
 
@@ -31,9 +32,12 @@ class Trainer:
                 progress.set_postfix(loss=running_loss)
         return self._net
 
-    def save(self, name: str) -> None:
+    def save(self, folder: str, name: str) -> None:
         self._net.eval()
-        torch.save(self._net.state_dict(), f"./trained/{name}.pt")
+        path = f"./trained/{folder}/"
+        if not os.path.exists(path):
+            os.mkdir(path)
+        torch.save(self._net.state_dict(), f"{path}/{name}.pt")
 
     def _train_epoch(self, batches: List[Batch]) -> float:
         running_loss = 0.0
