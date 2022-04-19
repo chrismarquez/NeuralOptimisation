@@ -22,9 +22,6 @@ def train(dataset):
 def hyperparameter_search(x_train: np.ndarray, y_train: np.ndarray, hyper_params, name):
     # np.exp(numpy.linspace(np.log(10E-4), np.log(10E-6), 3))
 
-    grid = ParameterGrid(hyper_params)
-    runs = len(list(grid))
-
     estimator = Estimator(name=name)
     searcher = GridSearchCV(estimator, param_grid=hyper_params, scoring=Estimator.score, cv=2, n_jobs=4, verbose=10)
     searcher.fit(x_train, y_train)
@@ -48,7 +45,7 @@ def test(trained_net, dataset):
 def main():
     hyper_params = {
         "learning_rate": [1E-4, 1E-5, 1E-6],  # Evenly spaced lr in log scale
-        "batch_size": [32, 128, 512],
+        "batch_size": [128, 512, 2048],
         "network_size": [25, 50, 75],
         "depth": [2, 3, 4],
         "activation_fn": ["ReLU", "Tanh"],
@@ -57,7 +54,7 @@ def main():
 
     dummy_params = {
         "learning_rate": [1E-4],  # Evenly spaced lr in log scale
-        "batch_size": [512],
+        "batch_size": [2048],
         "network_size": [25],
         "depth": [2],
         "activation_fn": ["ReLU", "Tanh"],
@@ -73,7 +70,7 @@ def main():
 
         print(f"Computing params of function: {name}")
 
-        hyperparameter_search(x_train, y_train, dummy_params, name)
+        hyperparameter_search(x_train, y_train, hyper_params, name)
 
 
 if __name__ == '__main__':

@@ -65,7 +65,11 @@ class Estimator(BaseEstimator, RegressorMixin):
         path = "./trained/metadata/"
         if not os.path.exists(path):
             os.mkdir(path)
-        with open(f"{path}/{self.name}.csv", 'a') as f:
+        filename = f"{path}/{self.name}.csv"
+        if not os.path.exists(filename):
+            with open(filename, 'a') as f:
+                f.write("id,learning_rate,batch_size,network_size,depth,activation_fn,rmse,r2\n")
+        with open(filename, 'a') as f:
             model_params = f"{id},{self.learning_rate},{self.batch_size},{self.network_size},{self.depth},{self.activation_fn},{score},{r2}\n"
             f.write(model_params)
         self.trainer.save(self.name, id)
