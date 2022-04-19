@@ -1,13 +1,12 @@
+from decimal import Decimal
 from typing import List, Tuple
 
 import numpy as np
 import torch
-from tqdm import tqdm
+from tqdm import trange
 from torch import nn, optim
 
-Batch = Tuple[torch.Tensor, torch.Tensor]  # (Input Features, Output Labels)
-
-# TODO: Check tensor / ndarray types
+Batch = Tuple[torch.Tensor, torch.Tensor]
 
 
 class Trainer:
@@ -20,16 +19,16 @@ class Trainer:
         self._batch_size = batch_size
         self._optimiser = optim.SGD(net.parameters(), lr=lr)
 
-    def train(self, x_train: np.ndarray, y_train: np.ndarray, epochs: int) -> nn.Module:
+    def train(self, x_train: np.ndarray, y_train: np.ndarray, details="", epochs=100) -> nn.Module:
         x_train, y_train = torch.tensor(x_train).to(self._device), torch.tensor(y_train).to(self._device)
         batches = self._prepare_batches(x_train, y_train)
-        print("===================   Training Starts =======================\n")
-        print(f"\tEpochs: {epochs}, Batch Size: {self._batch_size}, LR: {self._lr}\n")
-        for i in tqdm(range(epochs)):
-            running_loss = self._train_epoch(batches)
-            if i % 20 == 0:
-                print(f"Loss: {running_loss}")
-        print("\n===================   Training Finished =====================\n")
+        # print(f"\tEpochs: {epochs}, Batch Size: {self._batch_size}, LR: {self._lr}\n")
+        with trange(epochs, unit="epoch") as progress:
+            lr = "%.2E" % Decimal(self._lr)
+            progress.set_description(f"Training Model: LR [{lr}] BS [{self._batch_size}] {details}")
+            for _ in progress:
+                running_loss = self._train_epoch(batches)
+                progress.set_postfix(loss=running_loss)
         return self._net
 
     def save(self, name: str) -> None:

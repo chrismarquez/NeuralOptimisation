@@ -9,7 +9,7 @@ class Regressor:
     def __init__(self, net: nn.Module):
         self._device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self._net = net.to(self._device).double().eval()
-
+        
     def predict(self, x_predict: torch.tensor) -> np.ndarray:
         with torch.no_grad():
             output: torch.Tensor = self._net(x_predict.to(self._device))

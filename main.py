@@ -1,7 +1,10 @@
+import numpy
 import numpy as np
 import torch
+from sklearn.model_selection import GridSearchCV
+from torch import nn
 
-import functions
+from Estimator import Estimator
 from dataset import Dataset
 from models.FNN import FNN
 from models.Regressor import Regressor
@@ -15,14 +18,40 @@ def train(dataset):
     trainer.save("sum_squares")
     return trained_net
 
+
+def hyperparameter_search(x_train: np.ndarray, y_train: np.ndarray):
+    # np.exp(numpy.linspace(np.log(10E-4), np.log(10E-6), 3))
+    hyper_params = {
+        "learning_rate": [1E-4, 1E-5, 1E-6],  # Evenly spaced lr in log scale
+        "batch_size": [32, 128, 512],
+        "network_size": [25, 50, 75],
+        "depth": [2, 3, 4],
+        "activation_fn": [lambda: nn.ReLU(), lambda: nn.Tanh()]
+    }
+
+    estimator = Estimator()
+
+    searcher = GridSearchCV(estimator, param_grid=hyper_params, scoring="neg_mean_squared_error", cv=2)
+
+    searcher.fit(x_train, y_train)
+
+    print(searcher)
+
+
 def main():
+
     raw_dataset = np.loadtxt("samples/sum_squares.csv", delimiter=",")
     dataset = Dataset.create(raw_dataset)
+    x_train, y_train = dataset.train
 
     #trained_net = train(dataset)
 
-    trained_net = FNN()
-    trained_net.load_state_dict(torch.load("trained/sum_squares.pt"))
+    #trained_net = FNN()
+    #trained_net.load_state_dict(torch.load("trained/sum_squares.pt"))
+
+    hyperparameter_search(x_train, y_train)
+
+    return
 
     predictor = Regressor(trained_net)
     x = np.array([[1.0, 2.0]])
