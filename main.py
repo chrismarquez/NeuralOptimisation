@@ -23,7 +23,7 @@ def hyperparameter_search(x_train: np.ndarray, y_train: np.ndarray, hyper_params
     # np.exp(numpy.linspace(np.log(10E-4), np.log(10E-6), 3))
 
     estimator = Estimator(name=name)
-    searcher = GridSearchCV(estimator, param_grid=hyper_params, scoring=Estimator.score, cv=2, n_jobs=4, verbose=10)
+    searcher = GridSearchCV(estimator, param_grid=hyper_params, scoring=Estimator.score, cv=2, n_jobs=2, verbose=10)
     searcher.fit(x_train, y_train)
 
 
@@ -44,7 +44,7 @@ def test(trained_net, dataset):
 
 def main():
     hyper_params = {
-        "learning_rate": [1E-4, 1E-5, 1E-6],  # Evenly spaced lr in log scale
+        "learning_rate": [1E-4, 3E-5, 1E-5],  # Evenly spaced lr in log scale
         "batch_size": [128, 512, 2048],
         "network_size": [25, 50, 75],
         "depth": [2, 3, 4],

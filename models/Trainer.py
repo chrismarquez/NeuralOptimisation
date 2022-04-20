@@ -1,3 +1,4 @@
+import gc
 import os
 from decimal import Decimal
 from typing import List, Tuple
@@ -21,6 +22,8 @@ class Trainer:
         self._optimiser = optim.SGD(net.parameters(), lr=lr)
 
     def train(self, x_train: np.ndarray, y_train: np.ndarray, details="", epochs=200) -> nn.Module:
+        gc.collect()
+        torch.cuda.empty_cache()  # Clean GPU memory before use
         x_train, y_train = torch.tensor(x_train).to(self._device), torch.tensor(y_train).to(self._device)
         batches = self._prepare_batches(x_train, y_train)
         # print(f"\tEpochs: {epochs}, Batch Size: {self._batch_size}, LR: {self._lr}\n")
