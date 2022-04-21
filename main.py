@@ -2,9 +2,9 @@ import os
 
 import numpy as np
 import torch
-from sklearn.model_selection import GridSearchCV, ParameterGrid
+from sklearn.model_selection import GridSearchCV
 
-from Estimator import Estimator
+from models.Estimator import Estimator
 from dataset import Dataset
 from models.FNN import FNN
 from models.Regressor import Regressor

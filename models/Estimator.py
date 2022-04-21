@@ -89,7 +89,7 @@ class Estimator(BaseEstimator, RegressorMixin):
 
     def _log_model(self, score, r2):
         id = uuid.uuid4().__str__()
-        path = "./trained/metadata/"
+        path = "../trained/metadata/"
         if not os.path.exists(path):
             os.mkdir(path)
         filename = f"{path}/{self.name}.csv"
