@@ -58,7 +58,7 @@ def train_all_models():
     sizes_4 = [(it, 4) for it in sizes_4]
 
     hyper_params = {
-        "learning_rate": [1E-4, 3E-5],  # Evenly spaced lr in log scale
+        "learning_rate": [1E-7, 3E-8],  # Evenly spaced lr in log scale
         "batch_size": [128, 512],
         "network_config": sizes_2 + sizes_4,
         "activation_fn": ["ReLU", "Sigmoid"],
