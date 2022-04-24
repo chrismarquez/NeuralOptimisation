@@ -65,7 +65,8 @@ class Optimiser:
                 write_onnx_model_with_bounds(file.name, None, input_bounds)
                 network_definition = load_onnx_neural_network_with_bounds(file.name)
                 return Optimiser(network_definition)
-        except ImportError:
+        except ModuleNotFoundError:
+            print("TensorFlow is oddly needed for this module")
             pass
 
     @staticmethod
