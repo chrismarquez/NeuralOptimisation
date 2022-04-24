@@ -1,21 +1,28 @@
 import os
 
 import numpy as np
+import pandas as pd
+import sklearn.metrics
 import torch
 from sklearn.model_selection import GridSearchCV
+from torch import nn
+from tqdm import tqdm
+
+from sklearn import metrics
 
 from models.Estimator import Estimator
 from dataset import Dataset
 from models.FNN import FNN
 from models.Regressor import Regressor
 from models.Trainer import Trainer
+from optimisation.Optimiser import Optimiser
 
 
-def train(dataset):
-    trainer = Trainer(FNN())
+def train(dataset: Dataset):
+    trainer = Trainer(FNN.instantiate())
     x_train, y_train = dataset.train
-    trained_net = trainer.train(x_train, y_train, 400)
-    trainer.save("sum_squares")
+    trained_net = trainer.train(x_train, y_train, epochs=400)
+    trainer.save("test", "sum_squares")
     return trained_net
 
 
@@ -42,7 +49,7 @@ def test(trained_net, dataset):
     print(dev_error)
 
 
-def main():
+def train_all_models():
     hyper_params = {
         "learning_rate": [1E-4, 3E-5, 1E-5],  # Evenly spaced lr in log scale
         "batch_size": [128, 512, 2048],
@@ -73,5 +80,48 @@ def main():
         hyperparameter_search(x_train, y_train, hyper_params, name)
 
 
+def finished_optimisations(function: str):
+    filename = f"trained/optimisation/{function}.csv"
+    df = pd.read_csv(filename, delimiter=',')
+    return list(df['id'].values)
+
+
+def optimise_all_models():
+    path = "trained/metadata"
+    input_bounds = {
+        i: (-0.2, 0.2) for i in range(2)
+    }
+    activations = {
+        "ReLU": lambda: nn.ReLU(),
+        "Tanh": lambda: nn.Tanh()
+    }
+    for file in os.listdir(path):
+        function, _ = file.split(".")
+        finished = finished_optimisations(function)
+        df = pd.read_csv(f"{path}/{file}", delimiter=",")
+        for i, row in tqdm(df.iterrows(), total=df.shape[0]):
+            id, _, _, nodes, depth, activation_fn, _, _ = row
+            if id not in finished and depth == 2:
+                net = FNN(nodes, depth, activations[activation_fn])
+                optimiser = Optimiser.load(f"trained/{function}/{id}.pt", input_bounds, lambda: net)
+                x_opt, y_opt, z_opt = optimiser.solve()
+                location_error = metrics.mean_squared_error([0.0, 0.0], [x_opt, y_opt], squared=False)
+                optimum_error = metrics.mean_squared_error([0.0], [z_opt], squared=False)
+                computation_time = optimiser.optimisation_time
+                filename = f"trained/optimisation/{function}.csv"
+                if not os.path.exists(filename):
+                    with open(filename, 'a') as f:
+                        f.write("id,x,y,location_error, optimum_error, computation_time\n")
+                with open(filename, 'a') as f:
+                    model_params = f"{id},{x_opt},{y_opt},{location_error},{optimum_error},{computation_time}\n"
+                    f.write(model_params)
+            else:
+                print(f"Skip {id}")
+
+
 if __name__ == '__main__':
-    main()
+    # main()
+    # raw_dataset = np.loadtxt(f"samples/sum_squares.csv", delimiter=",")
+    # dataset = Dataset.create(raw_dataset)
+    # train(dataset)
+    optimise_all_models()

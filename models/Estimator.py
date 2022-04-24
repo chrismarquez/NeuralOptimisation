@@ -69,10 +69,8 @@ class Estimator(BaseEstimator, RegressorMixin):
             df = df[df['activation_fn'] == self.activation_fn]
             if not df.empty:
                 id = df['id'].values[0]
-                net = FNN(nodes=self.network_size, depth=self.depth, activation_fn=Estimator._activations[self.activation_fn])
                 model_path = f"./trained/{self.name}/{id}.pt"
-                net.load_state_dict(torch.load(model_path))
-                net.eval()
+                net = FNN.load(model_path)
                 gc.collect()
                 torch.cuda.empty_cache()  # Clean GPU memory before use
                 return net
