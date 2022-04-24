@@ -57,13 +57,16 @@ class Optimiser:
 
     @staticmethod
     def load(path: str, input_bounds: Dict, build_net: Callable[[], LoadableModule] = lambda: FNN.instantiate()) -> Optimiser:
-        from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
-        net = FNN.load(path, build_net)
-        with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as file:
-            Optimiser._onnx_export(net, file)
-            write_onnx_model_with_bounds(file.name, None, input_bounds)
-            network_definition = load_onnx_neural_network_with_bounds(file.name)
-            return Optimiser(network_definition)
+        try:
+            from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
+            net = FNN.load(path, build_net)
+            with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as file:
+                Optimiser._onnx_export(net, file)
+                write_onnx_model_with_bounds(file.name, None, input_bounds)
+                network_definition = load_onnx_neural_network_with_bounds(file.name)
+                return Optimiser(network_definition)
+        except ImportError:
+            pass
 
     @staticmethod
     def _onnx_export(net, file):
