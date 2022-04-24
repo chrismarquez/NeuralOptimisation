@@ -1,12 +1,11 @@
 from __future__ import annotations
+
 from collections import OrderedDict
 from typing import List, Tuple, Callable
 
-import numpy as np
 import torch
 from torch import nn
 from torch.nn import Sequential
-from torchsummary import summary
 
 from models.LoadableModule import LoadableModule
 
@@ -55,12 +54,8 @@ class FNN(LoadableModule):
     # [math.sqrt(2 * 10_000 * i + 15) - 4 for i in range(1, 10)]
     # [math.sqrt(32.0/21.0 * 10_000 * i - 32.0/21.0 + (64.0/21.0) ** 2) - 64.0/21.0 for i in range(1, 9)]
 
-
-    def params(self):
-        k = self.nodes
-        d = self.depth
-        return 2 * k * 2 ** d + np.sum([k ** 2 * 2 ** (2 * i + 1) for i in range(1, d)]) + \
-               2 * k + 1 + np.sum([k * 2 ** i for i in range(1, d + 1)])
+    def count_parameters(self) -> int:
+        return sum([p.numel() for p in self.parameters() if p.requires_grad])
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         return self.layers(input)
@@ -69,5 +64,5 @@ class FNN(LoadableModule):
 if __name__ == '__main__':
     net = FNN(nodes=300, depth=4, activation_fn=lambda: nn.ReLU()).cuda()
     print(net)
-    # print(net.params())
-    summary(net, (128, 2))
+    print(net.count_parameters())
+    #summary(net, (128, 2))

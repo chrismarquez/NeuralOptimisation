@@ -1,3 +1,4 @@
+import math
 import os
 
 import numpy as np
@@ -28,7 +29,6 @@ def train(dataset: Dataset):
 
 def hyperparameter_search(x_train: np.ndarray, y_train: np.ndarray, hyper_params, name):
     # np.exp(numpy.linspace(np.log(10E-4), np.log(10E-6), 3))
-
     estimator = Estimator(name=name)
     searcher = GridSearchCV(estimator, param_grid=hyper_params, scoring=Estimator.score, cv=2, n_jobs=2, verbose=10)
     searcher.fit(x_train, y_train)
@@ -50,21 +50,18 @@ def test(trained_net, dataset):
 
 
 def train_all_models():
-    hyper_params = {
-        "learning_rate": [1E-4, 3E-5, 1E-5],  # Evenly spaced lr in log scale
-        "batch_size": [128, 512, 2048],
-        "network_size": [25, 50, 75],
-        "depth": [2, 3, 4],
-        "activation_fn": ["ReLU", "Tanh"],
-        "should_save": [True]
-    }
 
-    dummy_params = {
-        "learning_rate": [1E-4],  # Evenly spaced lr in log scale
-        "batch_size": [2048],
-        "network_size": [25],
-        "depth": [2],
-        "activation_fn": ["ReLU", "Tanh"],
+    sizes_2 = [int(math.sqrt(2 * 10_000 * i + 15) - 4) for i in range(1, 10)]
+    sizes_4 = [int(math.sqrt(32.0/21.0 * 10_000 * i - 32.0/21.0 + (64.0/21.0) ** 2) - 64.0/21.0) for i in range(1, 9)]
+
+    sizes_2 = [(it, 2) for it in sizes_2]
+    sizes_4 = [(it, 4) for it in sizes_4]
+
+    hyper_params = {
+        "learning_rate": [1E-4, 3E-5],  # Evenly spaced lr in log scale
+        "batch_size": [128, 512],
+        "network_config": sizes_2 + sizes_4,
+        "activation_fn": ["ReLU", "Sigmoid"],
         "should_save": [True]
     }
 
@@ -120,8 +117,9 @@ def optimise_all_models():
 
 
 if __name__ == '__main__':
+    train_all_models()
     # main()
     # raw_dataset = np.loadtxt(f"samples/sum_squares.csv", delimiter=",")
     # dataset = Dataset.create(raw_dataset)
     # train(dataset)
-    optimise_all_models()
+    # optimise_all_models()
