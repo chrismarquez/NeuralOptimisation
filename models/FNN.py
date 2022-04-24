@@ -30,22 +30,23 @@ class FNN(LoadableModule):
 
     def __init__(self, nodes: int, depth: int, activation_fn: Callable[[], nn.Module]):
         super().__init__()
-        self.depth = depth
-        self.nodes = nodes
+        self.depth = depth  # network depth
+        self.nodes = nodes  # nodes of layer 1
         self.activation_fn = activation_fn
 
         layers = OrderedDict(self._get_layers())
         self.layers = Sequential(layers)
 
     def _get_layers(self) -> List[Tuple[str, nn.Module]]:
+        hidden = [int(self.nodes / (2 ** i)) for i in range(self.depth)]
+        sizes = [2] + hidden
         layers = []
-        prev = 2
         for i in range(self.depth):
-            curr = 2 ** (self.depth - i) * self.nodes
+            prev = sizes[i]
+            curr = sizes[i + 1]
             layers.append((f"linear{i + 1}", nn.Linear(in_features=prev, out_features=curr)))
             layers.append((f"act{i + 1}", self.activation_fn()))
-            prev = curr
-        layers.append((f"out", nn.Linear(in_features=prev, out_features=1)))
+        layers.append((f"out", nn.Linear(in_features=sizes[-1], out_features=1)))
         return layers
 
     # [math.sqrt(0.25 * 10_000 * i +1) - 1 for i in range(1, 10)]
@@ -66,7 +67,7 @@ class FNN(LoadableModule):
 
 
 if __name__ == '__main__':
-    net = FNN.instantiate().cuda()
+    net = FNN(nodes=300, depth=4, activation_fn=lambda: nn.ReLU()).cuda()
     print(net)
-    print(net.params())
+    # print(net.params())
     summary(net, (128, 2))
