@@ -1,3 +1,4 @@
+import math
 import os
 
 import numpy as np
@@ -28,7 +29,6 @@ def train(dataset: Dataset):
 
 def hyperparameter_search(x_train: np.ndarray, y_train: np.ndarray, hyper_params, name):
     # np.exp(numpy.linspace(np.log(10E-4), np.log(10E-6), 3))
-
     estimator = Estimator(name=name)
     searcher = GridSearchCV(estimator, param_grid=hyper_params, scoring=Estimator.score, cv=2, n_jobs=2, verbose=10)
     searcher.fit(x_train, y_train)
@@ -50,21 +50,18 @@ def test(trained_net, dataset):
 
 
 def train_all_models():
-    hyper_params = {
-        "learning_rate": [1E-4, 3E-5, 1E-5],  # Evenly spaced lr in log scale
-        "batch_size": [128, 512, 2048],
-        "network_size": [25, 50, 75],
-        "depth": [2, 3, 4],
-        "activation_fn": ["ReLU", "Tanh"],
-        "should_save": [True]
-    }
 
-    dummy_params = {
-        "learning_rate": [1E-4],  # Evenly spaced lr in log scale
-        "batch_size": [2048],
-        "network_size": [25],
-        "depth": [2],
-        "activation_fn": ["ReLU", "Tanh"],
+    sizes_2 = [int(math.sqrt(2 * 10_000 * i + 15) - 4) for i in range(1, 10)]
+    sizes_4 = [int(math.sqrt(32.0/21.0 * 10_000 * i - 32.0/21.0 + (64.0/21.0) ** 2) - 64.0/21.0) for i in range(1, 9)]
+
+    sizes_2 = [(it, 2) for it in sizes_2]
+    sizes_4 = [(it, 4) for it in sizes_4]
+
+    hyper_params = {
+        "learning_rate": [1E-6, 3E-7],  # Evenly spaced lr in log scale
+        "batch_size": [128, 512],
+        "network_config": sizes_2 + sizes_4,
+        "activation_fn": ["ReLU", "Sigmoid"],
         "should_save": [True]
     }
 
@@ -82,6 +79,8 @@ def train_all_models():
 
 def finished_optimisations(function: str):
     filename = f"trained/optimisation/{function}.csv"
+    if not os.path.exists(filename):
+        return []
     df = pd.read_csv(filename, delimiter=',')
     return list(df['id'].values)
 
@@ -93,17 +92,21 @@ def optimise_all_models():
     }
     activations = {
         "ReLU": lambda: nn.ReLU(),
-        "Tanh": lambda: nn.Tanh()
+        "Tanh": lambda: nn.Tanh(),
+        "Sigmoid": lambda: nn.Sigmoid(),
     }
     for file in os.listdir(path):
         function, _ = file.split(".")
         finished = finished_optimisations(function)
         df = pd.read_csv(f"{path}/{file}", delimiter=",")
+        df.sort_values(by=["network_size", "depth"])
+        df = df[df["activation_fn"] == "ReLU"]
         for i, row in tqdm(df.iterrows(), total=df.shape[0]):
             id, _, _, nodes, depth, activation_fn, _, _ = row
             if id not in finished and depth == 2:
                 net = FNN(nodes, depth, activations[activation_fn])
                 optimiser = Optimiser.load(f"trained/{function}/{id}.pt", input_bounds, lambda: net)
+                print(f"Size [{nodes}] Depth [{depth}]")
                 x_opt, y_opt, z_opt = optimiser.solve()
                 location_error = metrics.mean_squared_error([0.0, 0.0], [x_opt, y_opt], squared=False)
                 optimum_error = metrics.mean_squared_error([0.0], [z_opt], squared=False)
@@ -111,7 +114,7 @@ def optimise_all_models():
                 filename = f"trained/optimisation/{function}.csv"
                 if not os.path.exists(filename):
                     with open(filename, 'a') as f:
-                        f.write("id,x,y,location_error, optimum_error, computation_time\n")
+                        f.write("id,x,y,location_error,optimum_error,computation_time\n")
                 with open(filename, 'a') as f:
                     model_params = f"{id},{x_opt},{y_opt},{location_error},{optimum_error},{computation_time}\n"
                     f.write(model_params)
@@ -120,6 +123,7 @@ def optimise_all_models():
 
 
 if __name__ == '__main__':
+    #train_all_models()
     # main()
     # raw_dataset = np.loadtxt(f"samples/sum_squares.csv", delimiter=",")
     # dataset = Dataset.create(raw_dataset)

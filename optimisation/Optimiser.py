@@ -11,8 +11,6 @@ from omlt.neuralnet import FullSpaceNNFormulation, NetworkDefinition
 
 import functions
 from models.FNN import FNN
-from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
-
 
 # likely from an API design error, omlt.io requires the tensorflow module even if its not being used
 from models.LoadableModule import LoadableModule
@@ -53,18 +51,23 @@ class Optimiser:
         self.optimisation_time = 0.0
 
     def solve(self):
-        results = self._solver.solve(self._model, tee=True, options={"threads": 12})
+        results = self._solver.solve(self._model, tee=False, options={"threads": 12})
         self.optimisation_time = results['Solver'][0]['Wallclock time']
         return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
 
     @staticmethod
     def load(path: str, input_bounds: Dict, build_net: Callable[[], LoadableModule] = lambda: FNN.instantiate()) -> Optimiser:
-        net = FNN.load(path, build_net)
-        with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as file:
-            Optimiser._onnx_export(net, file)
-            write_onnx_model_with_bounds(file.name, None, input_bounds)
-            network_definition = load_onnx_neural_network_with_bounds(file.name)
-            return Optimiser(network_definition)
+        try:
+            from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
+            net = FNN.load(path, build_net)
+            with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as file:
+                Optimiser._onnx_export(net, file)
+                write_onnx_model_with_bounds(file.name, None, input_bounds)
+                network_definition = load_onnx_neural_network_with_bounds(file.name)
+                return Optimiser(network_definition)
+        except ModuleNotFoundError:
+            print("TensorFlow is oddly needed for this module")
+            pass
 
     @staticmethod
     def _onnx_export(net, file):
