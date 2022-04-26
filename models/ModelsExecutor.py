@@ -43,3 +43,8 @@ class ModelsExecutor(Executor):
 
             print(f"Computing params of function: {name}")
         return jobs
+
+
+if __name__ == '__main__':
+    executor = ModelsExecutor()
+    executor.run_all_jobs()

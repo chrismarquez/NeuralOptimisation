@@ -36,3 +36,7 @@ class OptimisationExecutor(Executor):
                     print(f"Skip {id}")
         return jobs
 
+
+if __name__ == '__main__':
+    executor = OptimisationExecutor()
+    executor.run_all_jobs()

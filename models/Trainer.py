@@ -8,6 +8,9 @@ import torch
 from tqdm.auto import trange
 from torch import nn, optim
 
+from dataset import Dataset
+from models.FNN import FNN
+
 Batch = Tuple[torch.Tensor, torch.Tensor]
 
 
@@ -72,3 +75,12 @@ class Trainer:
         start = index * self._batch_size
         end = (index + 1) * self._batch_size
         return dataset[start:end, :]
+
+
+if __name__ == '__main__':
+    trainer = Trainer(FNN(10, 2, "ReLU"))
+    raw_dataset = np.loadtxt(f"samples/sum_squares.csv", delimiter=",")
+    dataset = Dataset.create(raw_dataset)
+    x_train, y_train = dataset.train
+    trained_net = trainer.train(x_train, y_train, epochs=400)
+    trainer.save("test", "sum_squares")
