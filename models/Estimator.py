@@ -2,35 +2,33 @@ from __future__ import annotations
 
 import gc
 import os
-from typing import Union, Mapping
+import uuid as uuid
+from typing import Union, Tuple
 
 import numpy as np
+import pandas
 import torch
-import uuid as uuid
 from sklearn.base import BaseEstimator, RegressorMixin
-from torch import nn
 
-from models.FNN import FNN
+from models.FNN import FNN, Activation
 from models.Regressor import Regressor
 from models.Trainer import Trainer
-import pandas
+
+LayerSize = int
+NetworkDepth = int
+NetworkShape = Tuple[LayerSize, NetworkDepth]
 
 
 class Estimator(BaseEstimator, RegressorMixin):
-    _activations: Mapping[str, nn.Module] = {
-        "ReLU": lambda: nn.ReLU(),
-        "Tanh": lambda: nn.Tanh(),
-        "Sigmoid": lambda: nn.Sigmoid()
-    }
 
     def __init__(
         self,
-        name="",
-        learning_rate=1E-3,
-        batch_size=128,
-        network_config=(138, 2),
-        activation_fn="ReLU",
-        should_save=False,
+        name: str = "",
+        learning_rate: float = 1E-3,
+        batch_size: int = 128,
+        network_shape: NetworkShape = (138, 2),
+        activation_fn: Activation = "ReLU",
+        should_save: bool = False
     ):
         self.name = name
         self.regressor = None
@@ -38,20 +36,19 @@ class Estimator(BaseEstimator, RegressorMixin):
         self.net = None
         self.learning_rate = learning_rate
         self.batch_size = batch_size
-        self.network_config = network_config
+        self.network_shape = network_shape
         self.activation_fn = activation_fn
         self.should_save = should_save
 
     def fit(self, x_train: np.ndarray, y_train: np.ndarray) -> Estimator:
         self.net = self.load()
-        size, depth = self.network_config
+        size, depth = self.network_shape
         if self.net is None:
-            self.net = FNN(nodes=size, depth=depth,
-                           activation=Estimator._activations[self.activation_fn])
+            self.net = FNN(nodes=size, depth=depth, activation=self.activation_fn)
             trainable_params = self.net.count_parameters()
             params_class = round(trainable_params / 10_000.0) * 10
             self.trainer = Trainer(self.net, lr=self.learning_rate, batch_size=self.batch_size)
-            details = f"Size [{size}] Depth [{depth}] Params [{trainable_params}]  Class[{params_class} k]  Activation [{self.activation_fn}]"
+            details = f"Size [{size}] Depth [{depth}] Params [{trainable_params}]  Class[{params_class} k]  Activation [{self.activation_fn}] "
             self.trainer.train(x_train, y_train, details=details)
             self.regressor = Regressor(self.net)
         else:
@@ -62,7 +59,7 @@ class Estimator(BaseEstimator, RegressorMixin):
 
     def load(self):
         path = f"./trained/metadata/{self.name}.csv"
-        network_size, depth = self.network_config
+        network_size, depth = self.network_shape
         if os.path.exists(path):
             models = pandas.read_csv(path)
             df = models[models['learning_rate'] == self.learning_rate]
@@ -98,12 +95,12 @@ class Estimator(BaseEstimator, RegressorMixin):
             with open(filename, 'a') as f:
                 f.write("id,learning_rate,batch_size,network_size,depth,activation_fn,rmse,r2\n")
         with open(filename, 'a') as f:
-            network_size, depth = self.network_config
+            network_size, depth = self.network_shape
             model_params = f"{id},{self.learning_rate},{self.batch_size},{network_size},{depth},{self.activation_fn},{score},{r2}\n"
             f.write(model_params)
         self.trainer.save(self.name, id)
 
 
 if __name__ == '__main__':
-    est = Estimator(name="ackley", learning_rate=0.0001, batch_size=128, network_config=(138, 2), activation_fn="ReLU")
+    est = Estimator(name="ackley", learning_rate=0.0001, batch_size=128, network_shape=(138, 2), activation_fn="ReLU")
     est.load()
