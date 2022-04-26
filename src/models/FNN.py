@@ -7,7 +7,7 @@ import torch
 from torch import nn
 from torch.nn import Sequential
 
-from models.LoadableModule import LoadableModule
+from src.models.LoadableModule import LoadableModule
 
 Activation = Literal["ReLU", "Tanh", "Sigmoid"]
 ActivationFn = Callable[[], nn.Module]

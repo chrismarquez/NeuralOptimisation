@@ -8,8 +8,8 @@ import torch
 from tqdm.auto import trange
 from torch import nn, optim
 
-from dataset import Dataset
-from models.FNN import FNN
+from src.data.Dataset import Dataset
+from src.models.FNN import FNN
 
 Batch = Tuple[torch.Tensor, torch.Tensor]
 
@@ -24,7 +24,7 @@ class Trainer:
         self._batch_size = batch_size
         self._optimiser = optim.SGD(net.parameters(), lr=lr)
 
-    def train(self, x_train: np.ndarray, y_train: np.ndarray, details: str = "", epochs: int = 200) -> nn.Module:
+    def train(self, x_train: np.ndarray, y_train: np.ndarray, epochs: int, details: str = "") -> nn.Module:
         gc.collect()
         torch.cuda.empty_cache()  # Clean GPU memory before use
         x_train, y_train = torch.tensor(x_train).to(self._device), torch.tensor(y_train).to(self._device)
@@ -65,7 +65,7 @@ class Trainer:
             (self._get_chunk(input_dataset, i), self._get_chunk(target_dataset, i))
             for i in range(batch_count)
         ]
-        if len(target_dataset) % self._batch_size != 0:  # Remaining batch
+        if len(target_dataset) % self._batch_size != 0:  # Remaining cluster
             last_input = input_dataset[batch_count * self._batch_size:, :]
             last_target = target_dataset[batch_count * self._batch_size:, :]
             batches.append((last_input, last_target))

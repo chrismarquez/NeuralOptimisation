@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, Union
+from typing import Callable, Union, Mapping
 
 import numpy as np
 
@@ -32,12 +32,12 @@ def rastrigin(x: Real, y: Real) -> Real:
     return 20 + term
 
 
-pool = [
-    #[sum_squares, 10],
-    #[ackley, 32.768],
-    [rosenbrock, 5.0],
-    #[rastrigin, 5.12]
-]
+pool: Mapping[Function2D, float] = {
+    sum_squares: 10.0,
+    ackley: 32.768,
+    rosenbrock: 5.0,
+    rastrigin: 5.12
+}
 
 if __name__ == '__main__':
     print(sum_squares(0.0, 0.0))

@@ -10,9 +10,9 @@ import pandas
 import torch
 from sklearn.base import BaseEstimator, RegressorMixin
 
-from models.FNN import FNN, Activation
-from models.Regressor import Regressor
-from models.Trainer import Trainer
+from src.models.FNN import FNN, Activation
+from src.models.Regressor import Regressor
+from src.models.Trainer import Trainer
 
 LayerSize = int
 NetworkDepth = int
@@ -28,6 +28,7 @@ class Estimator(BaseEstimator, RegressorMixin):
         batch_size: int = 128,
         network_shape: NetworkShape = (138, 2),
         activation_fn: Activation = "ReLU",
+        epochs: int = 200,
         should_save: bool = False
     ):
         self.name = name
@@ -38,6 +39,7 @@ class Estimator(BaseEstimator, RegressorMixin):
         self.batch_size = batch_size
         self.network_shape = network_shape
         self.activation_fn = activation_fn
+        self.epochs = epochs
         self.should_save = should_save
 
     def fit(self, x_train: np.ndarray, y_train: np.ndarray) -> Estimator:
@@ -49,7 +51,7 @@ class Estimator(BaseEstimator, RegressorMixin):
             params_class = round(trainable_params / 10_000.0) * 10
             self.trainer = Trainer(self.net, lr=self.learning_rate, batch_size=self.batch_size)
             details = f"Size [{size}] Depth [{depth}] Params [{trainable_params}]  Class[{params_class} k]  Activation [{self.activation_fn}] "
-            self.trainer.train(x_train, y_train, details=details)
+            self.trainer.train(x_train, y_train, self.epochs,details=details)
             self.regressor = Regressor(self.net)
         else:
             self.should_save = False

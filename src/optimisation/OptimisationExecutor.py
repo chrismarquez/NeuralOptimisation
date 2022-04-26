@@ -4,10 +4,10 @@ from typing import List
 import pandas as pd
 from tqdm import tqdm
 
-from batch.Executor import Executor
-from batch.Job import Job
-from optimisation.OptimisationJob import OptimisationJob
-from optimisation.Optimiser import Optimiser
+from src.cluster.Executor import Executor
+from src.cluster.Job import Job
+from src.optimisation.OptimisationJob import OptimisationJob
+from src.optimisation.Optimiser import Optimiser
 
 
 class OptimisationExecutor(Executor):

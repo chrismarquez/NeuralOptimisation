@@ -4,10 +4,10 @@ from typing import List
 
 import numpy as np
 
-from batch.Executor import Executor
-from batch.Job import Job
-from dataset import Dataset
-from models.ModelJob import ModelJob
+from src.cluster.Executor import Executor
+from src.cluster.Job import Job
+from src.data.Dataset import Dataset
+from src.models.ModelJob import ModelJob
 
 
 class ModelsExecutor(Executor):
@@ -28,8 +28,10 @@ class ModelsExecutor(Executor):
             "batch_size": [128, 512],
             "network_shape": sizes_2 + sizes_4,
             "activation_fn": ["ReLU", "Sigmoid"],
+            "epochs": [200],
             "should_save": [True]
         }
+
         jobs = []
         for file in os.listdir("samples/"):
             raw_dataset = np.loadtxt(f"samples/{file}", delimiter=",")

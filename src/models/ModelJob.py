@@ -1,11 +1,13 @@
+from typing import Dict
+
 import numpy as np
 from sklearn.model_selection import GridSearchCV
 
-from batch.Job import Job
-from models.Estimator import Estimator
+from src.cluster.Job import Job
+from src.models.Estimator import Estimator
 
 
-def hyperparameter_search(x_train: np.ndarray, y_train: np.ndarray, hyper_params, function: str):
+def hyperparameter_search(x_train: np.ndarray, y_train: np.ndarray, hyper_params: Dict, function: str):
     # np.exp(numpy.linspace(np.log(10E-4), np.log(10E-6), 3))
     estimator = Estimator(name=function)
     searcher = GridSearchCV(estimator, param_grid=hyper_params, scoring=Estimator.score, cv=2, n_jobs=2, verbose=10)

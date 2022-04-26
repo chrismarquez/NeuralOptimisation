@@ -2,9 +2,9 @@ import os
 
 from sklearn import metrics
 
-from batch.Job import Job
-from models.FNN import FNN, Activation
-from optimisation.Optimiser import Optimiser, Bounds
+from src.cluster.Job import Job
+from src.models.FNN import FNN, Activation
+from src.optimisation.Optimiser import Optimiser, Bounds
 
 
 class OptimisationJob(Job):

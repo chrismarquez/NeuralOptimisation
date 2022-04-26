@@ -1,10 +1,11 @@
 import os.path
+import typing
 
 import numpy as np
 from scipy.stats import qmc
 
-import functions
-from functions import Function2D
+from src.data import functions
+from src.data.functions import Function2D
 
 
 def sobel_sample(fn: Function2D, density = 128, x_max=1.0) -> np.ndarray:
@@ -30,10 +31,10 @@ def sobel_sample(fn: Function2D, density = 128, x_max=1.0) -> np.ndarray:
 
 
 if __name__ == '__main__':
-    for fn, x_max in functions.pool:
+    for fn, x_max in functions.pool.items():
         samples = sobel_sample(fn, x_max=x_max)
         name = fn.__name__
-        path = "./samples/"
+        path = "../../resources/samples/"
         if not os.path.exists(path):
             os.mkdir(path)
-        np.savetxt(f"samples/{name}.csv", X=samples, delimiter=",")
+        np.savetxt(f"samples/{name}.csv", X=typing.cast(samples, int), delimiter=",")
