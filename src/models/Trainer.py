@@ -8,6 +8,9 @@ import torch
 from tqdm.auto import trange
 from torch import nn, optim
 
+from src.data.Dataset import Dataset
+from src.models.FNN import FNN
+
 Batch = Tuple[torch.Tensor, torch.Tensor]
 
 
@@ -21,7 +24,7 @@ class Trainer:
         self._batch_size = batch_size
         self._optimiser = optim.SGD(net.parameters(), lr=lr)
 
-    def train(self, x_train: np.ndarray, y_train: np.ndarray, details: str = "", epochs: int = 200) -> nn.Module:
+    def train(self, x_train: np.ndarray, y_train: np.ndarray, epochs: int, details: str = "") -> nn.Module:
         gc.collect()
         torch.cuda.empty_cache()  # Clean GPU memory before use
         x_train, y_train = torch.tensor(x_train).to(self._device), torch.tensor(y_train).to(self._device)
@@ -62,7 +65,7 @@ class Trainer:
             (self._get_chunk(input_dataset, i), self._get_chunk(target_dataset, i))
             for i in range(batch_count)
         ]
-        if len(target_dataset) % self._batch_size != 0:  # Remaining batch
+        if len(target_dataset) % self._batch_size != 0:  # Remaining cluster
             last_input = input_dataset[batch_count * self._batch_size:, :]
             last_target = target_dataset[batch_count * self._batch_size:, :]
             batches.append((last_input, last_target))
@@ -72,3 +75,12 @@ class Trainer:
         start = index * self._batch_size
         end = (index + 1) * self._batch_size
         return dataset[start:end, :]
+
+
+if __name__ == '__main__':
+    trainer = Trainer(FNN(10, 2, "ReLU"))
+    raw_dataset = np.loadtxt(f"samples/sum_squares.csv", delimiter=",")
+    dataset = Dataset.create(raw_dataset)
+    x_train, y_train = dataset.train
+    trained_net = trainer.train(x_train, y_train, epochs=400)
+    trainer.save("test", "sum_squares")

@@ -16,9 +16,7 @@ class LoadableModule(nn.Module, ABC):
     def dummy_input(self) -> torch.Tensor:
         pass
 
-    @staticmethod
-    def load(path: str, build_net: Callable[[], LoadableModule]) -> LoadableModule:
-        net = build_net()
-        net.load_state_dict(torch.load(path))
-        net.eval()
-        return net
+    def load(self, path: str) -> LoadableModule:
+        self.load_state_dict(torch.load(path))
+        self.eval()
+        return self

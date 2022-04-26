@@ -1,19 +1,22 @@
 from __future__ import annotations
 
+import os
 import tempfile
-from typing import Dict, Callable
+from typing import Callable, Mapping, Tuple
 
+import pandas as pd
 import pyomo.core
-from omlt import OmltBlock  # Ignoring dependency resolution
 import pyomo.environ as pyo
 import torch.onnx
+from omlt import OmltBlock  # Ignoring dependency resolution
 from omlt.neuralnet import FullSpaceNNFormulation, NetworkDefinition
 
-import functions
-from models.FNN import FNN
-
+from src.data import functions
+from src.models.FNN import FNN
 # likely from an API design error, omlt.io requires the tensorflow module even if its not being used
-from models.LoadableModule import LoadableModule
+from src.models.LoadableModule import LoadableModule
+
+Bounds = Mapping[int, Tuple[float, float]]
 
 
 class Optimiser:
@@ -56,10 +59,10 @@ class Optimiser:
         return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
 
     @staticmethod
-    def load(path: str, input_bounds: Dict, build_net: Callable[[], LoadableModule] = lambda: FNN.instantiate()) -> Optimiser:
+    def load(path: str, input_bounds: Bounds, build_net: Callable[[], LoadableModule]) -> Optimiser:
         try:
             from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
-            net = FNN.load(path, build_net)
+            net = build_net().load(path)
             with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as file:
                 Optimiser._onnx_export(net, file)
                 write_onnx_model_with_bounds(file.name, None, input_bounds)
@@ -68,6 +71,14 @@ class Optimiser:
         except ModuleNotFoundError:
             print("TensorFlow is oddly needed for this module")
             pass
+
+    @staticmethod
+    def finished_optimisations(function: str):
+        filename = f"trained/optimisation/{function}.csv"
+        if not os.path.exists(filename):
+            return []
+        df = pd.read_csv(filename, delimiter=',')
+        return list(df['id'].values)
 
     @staticmethod
     def _onnx_export(net, file):
@@ -87,18 +98,13 @@ class Optimiser:
 
 
 if __name__ == '__main__':
-
-    [x_max] = [x_max for fn, x_max in functions.pool if fn == functions.sum_squares]
-
-    input_bounds = {
+    [x_max] = [x_max for fn, x_max in functions.pool.items() if fn == functions.sum_squares]
+    input_bounds: Bounds = {
         i: (-0.2, 0.2) for i in range(2)
     }
-
     print(input_bounds)
-
-    optimiser = Optimiser.load("../trained/test/sum_squares.pt", input_bounds)
-
+    net = FNN(10, 2, "ReLU")
+    optimiser = Optimiser.load("../../resources/trained/test/sum_squares.pt", input_bounds, lambda: net)
     values = optimiser.solve()
-
     print(values)
 
