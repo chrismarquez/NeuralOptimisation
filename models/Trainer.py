@@ -21,7 +21,7 @@ class Trainer:
         self._batch_size = batch_size
         self._optimiser = optim.SGD(net.parameters(), lr=lr)
 
-    def train(self, x_train: np.ndarray, y_train: np.ndarray, details: str = "", epochs: int = 2000) -> nn.Module:
+    def train(self, x_train: np.ndarray, y_train: np.ndarray, details: str = "", epochs: int = 200) -> nn.Module:
         gc.collect()
         torch.cuda.empty_cache()  # Clean GPU memory before use
         x_train, y_train = torch.tensor(x_train).to(self._device), torch.tensor(y_train).to(self._device)

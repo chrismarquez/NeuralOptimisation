@@ -51,7 +51,7 @@ class Optimiser:
         self.optimisation_time = 0.0
 
     def solve(self):
-        results = self._solver.solve(self._model, tee=True, options={"threads": 12})
+        results = self._solver.solve(self._model, tee=False, options={"threads": 12})
         self.optimisation_time = results['Solver'][0]['Wallclock time']
         return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
 

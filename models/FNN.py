@@ -48,7 +48,7 @@ class FNN(LoadableModule):
         layers.append((f"out", nn.Linear(in_features=sizes[-1], out_features=1)))
         return layers
 
-    # [math.sqrt(0.25 * 10_000 * i +1) - 1 for i in range(1, 10)]
+    # [math.sqrt(0.25 * 10_000 * i + 1) - 1 for i in range(1, 10)]
     # [(math.sqrt((1.0/32.0)* 10_000 * i + 1.0/9.0) - 1.0/3.0) / 3.0 for i in range(1, 9)]
 
     # [math.sqrt(2 * 10_000 * i + 15) - 4 for i in range(1, 10)]
