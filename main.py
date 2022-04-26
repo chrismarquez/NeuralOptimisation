@@ -1,13 +1,9 @@
-import math
-import os
-
 import numpy as np
 import torch
-from sklearn.model_selection import GridSearchCV
 
 from dataset import Dataset
-from models.Estimator import Estimator
 from models.FNN import FNN
+from models.ModelsExecutor import ModelsExecutor
 from models.Regressor import Regressor
 from models.Trainer import Trainer
 from optimisation.OptimisationExecutor import OptimisationExecutor
@@ -20,12 +16,6 @@ def train(dataset: Dataset):
     trainer.save("test", "sum_squares")
     return trained_net
 
-
-def hyperparameter_search(x_train: np.ndarray, y_train: np.ndarray, hyper_params, name):
-    # np.exp(numpy.linspace(np.log(10E-4), np.log(10E-6), 3))
-    estimator = Estimator(name=name)
-    searcher = GridSearchCV(estimator, param_grid=hyper_params, scoring=Estimator.score, cv=2, n_jobs=2, verbose=10)
-    searcher.fit(x_train, y_train)
 
 
 def test(trained_net, dataset):
@@ -43,33 +33,6 @@ def test(trained_net, dataset):
     print(dev_error)
 
 
-def train_all_models():
-
-    sizes_2 = [int(math.sqrt(2 * 10_000 * i + 15) - 4) for i in range(1, 10)]
-    sizes_4 = [int(math.sqrt(32.0/21.0 * 10_000 * i - 32.0/21.0 + (64.0/21.0) ** 2) - 64.0/21.0) for i in range(1, 9)]
-
-    sizes_2 = [(it, 2) for it in sizes_2]
-    sizes_4 = [(it, 4) for it in sizes_4]
-
-    hyper_params = {
-        "learning_rate": [1E-6, 3E-7],  # Evenly spaced lr in log scale
-        "batch_size": [128, 512],
-        "network_config": sizes_2 + sizes_4,
-        "activation_fn": ["ReLU", "Sigmoid"],
-        "should_save": [True]
-    }
-
-    for file in os.listdir("samples/"):
-        raw_dataset = np.loadtxt(f"samples/{file}", delimiter=",")
-        dataset = Dataset.create(raw_dataset)
-        x_train, y_train = dataset.train
-
-        name, ext = file.split(".")
-
-        print(f"Computing params of function: {name}")
-
-        hyperparameter_search(x_train, y_train, hyper_params, name)
-
 
 if __name__ == '__main__':
     #train_all_models()
@@ -77,6 +40,8 @@ if __name__ == '__main__':
     # raw_dataset = np.loadtxt(f"samples/sum_squares.csv", delimiter=",")
     # dataset = Dataset.create(raw_dataset)
     # train(dataset)
-    exec = OptimisationExecutor()
+    #exec = OptimisationExecutor()
+    #exec.run_all_jobs()
+    exec = ModelsExecutor()
     exec.run_all_jobs()
 
