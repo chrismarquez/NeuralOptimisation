@@ -24,14 +24,6 @@ class FNN(LoadableModule):
     def dummy_input(self) -> torch.Tensor:
         return torch.empty((1, 2))
 
-    @staticmethod
-    def instantiate():
-        return FNN(75, 2, activation="ReLU")
-
-    @staticmethod
-    def load(path: str, build_net: Callable[[], LoadableModule] = lambda: FNN.instantiate()) -> LoadableModule:
-        return LoadableModule.load(path, build_net)
-
     def __init__(self, nodes: int, depth: int, activation: Activation):
         super().__init__()
         self.depth = depth  # network depth

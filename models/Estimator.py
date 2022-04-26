@@ -59,18 +59,18 @@ class Estimator(BaseEstimator, RegressorMixin):
 
     def load(self):
         path = f"./trained/metadata/{self.name}.csv"
-        network_size, depth = self.network_shape
+        nodes, depth = self.network_shape
         if os.path.exists(path):
             models = pandas.read_csv(path)
             df = models[models['learning_rate'] == self.learning_rate]
             df = df[df['batch_size'] == self.batch_size]
-            df = df[df['network_size'] == network_size]
+            df = df[df['network_size'] == nodes]
             df = df[df['depth'] == depth]
             df = df[df['activation_fn'] == self.activation_fn]
             if not df.empty:
                 id = df['id'].values[0]
                 model_path = f"./trained/{self.name}/{id}.pt"
-                net = FNN.load(model_path)
+                net = FNN(nodes, depth, self.activation_fn).load(model_path)
                 gc.collect()
                 torch.cuda.empty_cache()  # Clean GPU memory before use
                 return net
