@@ -47,7 +47,7 @@ class Estimator(BaseEstimator, RegressorMixin):
         size, depth = self.network_config
         if self.net is None:
             self.net = FNN(nodes=size, depth=depth,
-                           activation_fn=Estimator._activations[self.activation_fn])
+                           activation=Estimator._activations[self.activation_fn])
             trainable_params = self.net.count_parameters()
             params_class = round(trainable_params / 10_000.0) * 10
             self.trainer = Trainer(self.net, lr=self.learning_rate, batch_size=self.batch_size)

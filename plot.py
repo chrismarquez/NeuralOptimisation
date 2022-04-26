@@ -1,8 +1,8 @@
 
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from torch import nn
 
 from functions import Function2D
 from models.FNN import FNN
@@ -20,7 +20,7 @@ def plot_size_optimisation_time(function: str):
     data = load_data(function)
     size = data['network_size'].values
     depth = data['depth'].values
-    x = [FNN(nodes=s, depth=d, activation_fn=lambda: nn.ReLU()).count_parameters() for (s, d) in zip(size, depth)]
+    x = [FNN(nodes=s, depth=d, activation="ReLU").count_parameters() for (s, d) in zip(size, depth)]
     y = data['computation_time'].values
     z = {}
     for (size, time) in zip(x, y):
@@ -45,7 +45,7 @@ def plot_size_error(function: str):
     data = load_data(function)
     size = data['network_size'].values
     depth = data['depth'].values
-    x = [FNN(nodes=s, depth=d, activation_fn=lambda: nn.ReLU()).count_parameters() for (s, d) in zip(size, depth)]
+    x = [FNN(nodes=s, depth=d, activation="ReLU").count_parameters() for (s, d) in zip(size, depth)]
     y = data['location_error'].values
     z = {}
     for (size, error) in zip(x, y):
@@ -76,7 +76,7 @@ def plot_size_optimisation_error(function: str):
     data = load_data(function)
     size = data['network_size'].values
     depth = data['depth'].values
-    x = [FNN(nodes=s, depth=d, activation_fn=lambda: nn.ReLU()).count_parameters() for (s, d) in zip(size, depth)]
+    x = [FNN(nodes=s, depth=d, activation="ReLU").count_parameters() for (s, d) in zip(size, depth)]
     y = data['optimum_error'].values
     z = {}
     for (size, error) in zip(x, y):
@@ -100,7 +100,7 @@ def plot_size_rmse(function: str):
     data = load_data(function)
     size = data['network_size'].values
     depth = data['depth'].values
-    x = [FNN(nodes=s, depth=d, activation_fn=lambda: nn.ReLU()).count_parameters() for (s, d) in zip(size, depth)]
+    x = [FNN(nodes=s, depth=d, activation="ReLU").count_parameters() for (s, d) in zip(size, depth)]
     y = data['rmse'].values
     z = {}
     for (size, error) in zip(x, y):

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import os
 import tempfile
 from typing import Dict, Callable
 
+import pandas as pd
 import pyomo.core
 from omlt import OmltBlock  # Ignoring dependency resolution
 import pyomo.environ as pyo
@@ -68,6 +70,14 @@ class Optimiser:
         except ModuleNotFoundError:
             print("TensorFlow is oddly needed for this module")
             pass
+
+    @staticmethod
+    def finished_optimisations(function: str):
+        filename = f"trained/optimisation/{function}.csv"
+        if not os.path.exists(filename):
+            return []
+        df = pd.read_csv(filename, delimiter=',')
+        return list(df['id'].values)
 
     @staticmethod
     def _onnx_export(net, file):
