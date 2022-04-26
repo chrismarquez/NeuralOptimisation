@@ -2,21 +2,15 @@ import math
 import os
 
 import numpy as np
-import pandas as pd
-import sklearn.metrics
 import torch
 from sklearn.model_selection import GridSearchCV
-from torch import nn
-from tqdm import tqdm
 
-from sklearn import metrics
-
-from models.Estimator import Estimator
 from dataset import Dataset
+from models.Estimator import Estimator
 from models.FNN import FNN
 from models.Regressor import Regressor
 from models.Trainer import Trainer
-from optimisation.Optimiser import Optimiser
+from optimisation.OptimisationExecutor import OptimisationExecutor
 
 
 def train(dataset: Dataset):
@@ -77,13 +71,12 @@ def train_all_models():
         hyperparameter_search(x_train, y_train, hyper_params, name)
 
 
-
-
-
 if __name__ == '__main__':
     #train_all_models()
     # main()
     # raw_dataset = np.loadtxt(f"samples/sum_squares.csv", delimiter=",")
     # dataset = Dataset.create(raw_dataset)
     # train(dataset)
-    optimise_all_models()
+    exec = OptimisationExecutor()
+    exec.run_all_jobs()
+

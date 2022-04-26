@@ -2,20 +2,21 @@ from __future__ import annotations
 
 import os
 import tempfile
-from typing import Dict, Callable
+from typing import Callable, Mapping, Tuple
 
 import pandas as pd
 import pyomo.core
-from omlt import OmltBlock  # Ignoring dependency resolution
 import pyomo.environ as pyo
 import torch.onnx
+from omlt import OmltBlock  # Ignoring dependency resolution
 from omlt.neuralnet import FullSpaceNNFormulation, NetworkDefinition
 
 import functions
 from models.FNN import FNN
-
 # likely from an API design error, omlt.io requires the tensorflow module even if its not being used
 from models.LoadableModule import LoadableModule
+
+Bounds = Mapping[int, Tuple[float, float]]
 
 
 class Optimiser:
@@ -58,7 +59,7 @@ class Optimiser:
         return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
 
     @staticmethod
-    def load(path: str, input_bounds: Dict, build_net: Callable[[], LoadableModule] = lambda: FNN.instantiate()) -> Optimiser:
+    def load(path: str, input_bounds: Bounds, build_net: Callable[[], LoadableModule] = lambda: FNN.instantiate()) -> Optimiser:
         try:
             from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
             net = FNN.load(path, build_net)
