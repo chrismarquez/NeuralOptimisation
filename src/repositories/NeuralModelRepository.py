@@ -13,17 +13,17 @@ from src.repositories.db_models import NeuralModel, NeuralProperties, Optimisati
 class NeuralModelRepository:
 
     def __init__(self):
-        self.client = MongoClient()
-        self.db: Database = self.client.NeuralOptimisation
-        self.collection: Collection = self.db.NeuralModel
+        self._client = MongoClient()
+        self._db: Database = self._client.NeuralOptimisation
+        self._collection: Collection = self._db.NeuralModel
 
     def get(self, id: str) -> NeuralModel:
-        document = self.collection.find_one({"_id": ObjectId(id)})
+        document = self._collection.find_one({"_id": ObjectId(id)})
         return NeuralModel.from_dict(document)
 
-    def list(self, experiment_id: Optional[str] = None) -> List[NeuralModel]:
+    def get_all(self, experiment_id: Optional[str] = None) -> List[NeuralModel]:
         query = {} if experiment_id is None else {"experiment_id": experiment_id}
-        documents = self.collection.find(query)
+        documents = self._collection.find(query)
         return [NeuralModel.from_dict(document) for document in documents]
 
     def save(self, model: NeuralModel) -> None:
@@ -33,12 +33,15 @@ class NeuralModelRepository:
             "optimisation_properties": vars(model.optimisation_properties),
             "model_data": model.model_data
         }
-        self.collection.insert_one(document)
+        self._collection.insert_one(document)
 
 
 if __name__ == '__main__':
     neural = NeuralProperties(1E-4, 32, 10, 3, "ReLU", 0.54, 0.95)
     opt = OptimisationProperties(0.0, 0.0, 0.5, 0.2, 12.3)
     model = NeuralModel(neural, opt, b"test")
+    x = model.to_dict()
     repo = NeuralModelRepository()
-    repo.save(model)
+    models = repo.get_all()
+    print(model)
+    print(models)
