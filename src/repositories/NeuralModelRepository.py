@@ -6,14 +6,16 @@ from bson import ObjectId
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
+from tqdm import tqdm
 
 from src.repositories.db_models import NeuralModel, NeuralProperties, OptimisationProperties
+from src.views.Plot import Plot
 
 
 class NeuralModelRepository:
 
     def __init__(self):
-        self._client = MongoClient()
+        self._client = MongoClient("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017")
         self._db: Database = self._client.NeuralOptimisation
         self._collection: Collection = self._db.NeuralModel
 
@@ -28,7 +30,6 @@ class NeuralModelRepository:
 
     def save(self, model: NeuralModel) -> None:
         document = {
-            "id": model.id,
             "neural_properties": vars(model.neural_properties),
             "optimisation_properties": vars(model.optimisation_properties),
             "model_data": model.model_data
@@ -37,11 +38,15 @@ class NeuralModelRepository:
 
 
 if __name__ == '__main__':
-    neural = NeuralProperties(1E-4, 32, 10, 3, "ReLU", 0.54, 0.95)
-    opt = OptimisationProperties(0.0, 0.0, 0.5, 0.2, 12.3)
-    model = NeuralModel(neural, opt, b"test")
-    x = model.to_dict()
     repo = NeuralModelRepository()
-    models = repo.get_all()
-    print(model)
-    print(models)
+    for function in tqdm(["ackley", "rastrigin", "rosenbrock", "sum_squares"], colour="green"):
+        df = Plot.load_data(function)
+        for id, row in tqdm(df.iterrows(), total=df.shape[0], colour="orange"):
+            learning_rate, batch_size, network_size, depth, activation_fn, rmse, r2, x, y, location_error, optimum_error, computation_time = row
+            neural_props = NeuralProperties(learning_rate, batch_size, network_size, depth, activation_fn, rmse, r2)
+            optimisation_props = OptimisationProperties(x, y, location_error, optimum_error, computation_time)
+            model_file = open(f"../../resources/trained/{function}/{id}.pt", "rb")
+            model_data = model_file.read()
+            model_file.close()
+            model = NeuralModel(neural_props, optimisation_props, model_data, experiment_id="0")
+            repo.save(model)
