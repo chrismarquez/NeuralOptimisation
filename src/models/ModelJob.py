@@ -27,3 +27,5 @@ class ModelJob(Job):
         hyperparameter_search(self.x_train, self.y_train, self.hyper_params, self.function)
 
 
+if __name__ == '__main__':  # Prepare this to be used as job trigger-able
+    pass

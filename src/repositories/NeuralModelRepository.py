@@ -1,79 +1,44 @@
+from __future__ import annotations
 
+from typing import List, Optional
+
+from bson import ObjectId
 from pymongo import MongoClient
+from pymongo.collection import Collection
+from pymongo.database import Database
 
-from src.models.FNN import Activation
-
-
-class NeuralProperties:
-
-    def __init__(
-        self,
-        learning_rate: float,
-        batch_size: int,
-        network_size: int,
-        depth: int,
-        activation_fn: Activation,
-        rmse: float,
-        r2: float
-    ):
-        self.learning_rate = learning_rate
-        self.batch_size = batch_size
-        self.network_size = network_size
-        self.depth = depth
-        self.activation_fn = activation_fn
-        self.rmse = rmse
-        self.r2 = r2
-
-class OptimisationProperties:
-
-    def __init__(
-        self,
-        x: float,
-        y: float,
-        location_error: float,
-        optimum_error: float,
-        computation_time: float
-    ):
-        self.x = x
-        self.y = y
-        self.location_error = location_error
-        self.optimum_error = optimum_error
-        self.computation_time = computation_time
-
-
-
-
-class NeuralModel:
-
-    def __init__(self, id: str, neuralProperties: NeuralProperties, optimisationProperties: OptimisationProperties,
-                 modelData: bytes):
-        super().__init__()
-        self.id = id
-        self.neuralProperties = neuralProperties
-        self.optimisationProperties = optimisationProperties
-        self.modelData = modelData
+from src.repositories.db_models import NeuralModel, NeuralProperties, OptimisationProperties
 
 
 class NeuralModelRepository:
 
     def __init__(self):
         self.client = MongoClient()
-        self.db = self.client.NeuralOptimisation
-        self.collection = self.db.NeuralModel
+        self.db: Database = self.client.NeuralOptimisation
+        self.collection: Collection = self.db.NeuralModel
 
-    def save(self, model: NeuralModel):
-        payload = {
+    def get(self, id: str) -> NeuralModel:
+        document = self.collection.find_one({"_id": ObjectId(id)})
+        return NeuralModel.from_dict(document)
+
+    def list(self, experiment_id: Optional[str] = None) -> List[NeuralModel]:
+        query = {} if experiment_id is None else {"experiment_id": experiment_id}
+        documents = self.collection.find(query)
+        return [NeuralModel.from_dict(document) for document in documents]
+
+    def save(self, model: NeuralModel) -> None:
+        document = {
             "id": model.id,
-            "neuralProperties": vars(model.neuralProperties),
-            "optimisationProperties": vars(model.optimisationProperties),
-            "modelData": model.modelData
+            "neural_properties": vars(model.neural_properties),
+            "optimisation_properties": vars(model.optimisation_properties),
+            "model_data": model.model_data
         }
-        self.collection.insert_one(payload)
+        self.collection.insert_one(document)
 
 
 if __name__ == '__main__':
     neural = NeuralProperties(1E-4, 32, 10, 3, "ReLU", 0.54, 0.95)
     opt = OptimisationProperties(0.0, 0.0, 0.5, 0.2, 12.3)
-    model = NeuralModel("test-ID", neural, opt, b"test")
+    model = NeuralModel(neural, opt, b"test")
     repo = NeuralModelRepository()
     repo.save(model)
