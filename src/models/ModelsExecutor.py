@@ -8,12 +8,14 @@ from src.cluster.Executor import Executor
 from src.cluster.Job import Job
 from src.data.Dataset import Dataset
 from src.models.ModelJob import ModelJob
+from src.repositories.NeuralModelRepository import NeuralModelRepository
 
 
 class ModelsExecutor(Executor):
 
-    def __init__(self):
+    def __init__(self, repository: NeuralModelRepository):
         super().__init__()
+        self._repository = repository
 
     def _get_jobs(self) -> List[Job]:
         sizes_2 = [int(math.sqrt(2 * 10_000 * i + 15) - 4) for i in range(1, 10)]
@@ -28,19 +30,16 @@ class ModelsExecutor(Executor):
             "batch_size": [128, 512],
             "network_shape": sizes_2 + sizes_4,
             "activation_fn": ["ReLU", "Sigmoid"],
-            "epochs": [200],
-            "should_save": [True]
         }
 
         jobs = []
-        for file in os.listdir("samples/"):
-            raw_dataset = np.loadtxt(f"samples/{file}", delimiter=",")
+        for file in os.listdir("../resources/samples/"):
+            raw_dataset = np.loadtxt(f"../resources/samples/{file}", delimiter=",")
             dataset = Dataset.create(raw_dataset)
-            x_train, y_train = dataset.train
 
             name, ext = file.split(".")
 
-            job = ModelJob(name, x_train, y_train, hyper_params)
+            job = ModelJob(name, dataset, hyper_params, self._repository)
             jobs.append(job)
 
             print(f"Computing params of function: {name}")
@@ -48,5 +47,6 @@ class ModelsExecutor(Executor):
 
 
 if __name__ == '__main__':
-    executor = ModelsExecutor()
+    repo = NeuralModelRepository()
+    executor = ModelsExecutor(repo)
     executor.run_all_jobs()

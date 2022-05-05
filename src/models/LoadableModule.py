@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import tempfile
 from typing import Callable, TypeVar
 import torch
 from torch import nn
@@ -20,3 +21,11 @@ class LoadableModule(nn.Module, ABC):
         self.load_state_dict(torch.load(path))
         self.eval()
         return self
+
+    def load_bytes(self, buffer: bytes) -> LoadableModule:
+        with tempfile.NamedTemporaryFile(suffix=".pt", delete=False) as file:
+            file.write(buffer)
+            file.seek(0)
+            self.load_state_dict(torch.load(file))
+            self.eval()
+            return self

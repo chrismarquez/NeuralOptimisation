@@ -8,15 +8,17 @@ from src.cluster.Executor import Executor
 from src.cluster.Job import Job
 from src.optimisation.OptimisationJob import OptimisationJob
 from src.optimisation.Optimiser import Optimiser
+from src.repositories.NeuralModelRepository import NeuralModelRepository
 
 
 class OptimisationExecutor(Executor):
 
-    def __init__(self):
+    def __init__(self, repository: NeuralModelRepository):
         super().__init__()
+        self._repository = repository
 
     def _get_jobs(self) -> List[Job]:
-        path = "trained/metadata"
+        path = "../resources/trained/metadata"
         input_bounds = {
             i: (-0.2, 0.2) for i in range(2)
         }
@@ -38,5 +40,6 @@ class OptimisationExecutor(Executor):
 
 
 if __name__ == '__main__':
-    executor = OptimisationExecutor()
+    repo = NeuralModelRepository()
+    executor = OptimisationExecutor(repo)
     executor.run_all_jobs()

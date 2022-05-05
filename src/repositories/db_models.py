@@ -23,12 +23,22 @@ class DataModel(ABC):
 
 
 @dataclass
-class NeuralProperties(DataModel):
+class NeuralConfig(DataModel):
     learning_rate: float
     batch_size: int
     network_size: int
     depth: int
     activation_fn: Activation
+
+    def __iter__(self):
+        return iter((self.learning_rate, self.batch_size, self.network_size, self.depth, self.activation_fn))
+
+    @staticmethod
+    def from_dict(document: Dict) -> NeuralConfig:
+        return from_dict(NeuralConfig, document)
+
+@dataclass
+class NeuralProperties(DataModel):
     rmse: float
     r2: float
 
@@ -52,18 +62,24 @@ class OptimisationProperties(DataModel):
 
 @dataclass
 class NeuralModel(DataModel):
+    function: str
+    neural_config: NeuralConfig
     neural_properties: NeuralProperties
-    optimisation_properties: OptimisationProperties
     model_data: bytes
+    optimisation_properties: Optional[OptimisationProperties] = None
     id: Optional[str] = None
     experiment_id: Optional[str] = None
 
     @staticmethod
     def from_dict(document: Dict) -> NeuralModel:
+        opt_props = document.get("optimisation_properties", None)
+        opt_props = OptimisationProperties.from_dict(opt_props) if opt_props is not None else None
         return NeuralModel(
             id=str(document["_id"]),
+            function=document["function"],
+            neural_config=NeuralConfig.from_dict(document["neural_config"]),
             neural_properties=NeuralProperties.from_dict(document["neural_properties"]),
-            optimisation_properties=OptimisationProperties.from_dict(document["optimisation_properties"]),
+            optimisation_properties=opt_props,
             model_data=document["model_data"],
             experiment_id=document.get("experiment_id", None)
         )
