@@ -3,8 +3,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, asdict
 
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
+import numpy as np
+from bson import ObjectId
+
+from src.data.Dataset import Dataset
 from src.models.FNN import Activation
 
 from dacite import from_dict
@@ -36,6 +40,7 @@ class NeuralConfig(DataModel):
     @staticmethod
     def from_dict(document: Dict) -> NeuralConfig:
         return from_dict(NeuralConfig, document)
+
 
 @dataclass
 class NeuralProperties(DataModel):
@@ -83,3 +88,57 @@ class NeuralModel(DataModel):
             model_data=document["model_data"],
             experiment_id=document.get("experiment_id", None)
         )
+
+
+@dataclass
+class SampleDataset(DataModel):
+    function: str
+    samples: List[Sample]
+    id: Optional[str] = None
+
+    @staticmethod
+    def from_dict(document: Dict) -> SampleDataset:
+        return SampleDataset(
+            id=str(document["_id"]),
+            function=document["function"],
+            samples=[Sample.from_dict(sample) for sample in document["samples"]]
+        )
+
+    def to_dataset(self) -> Dataset:
+        samples = [[sample.x, sample.y, sample.z] for sample in self.samples]
+        return Dataset.create(np.array(samples))
+
+
+@dataclass
+class Sample(DataModel):
+    x: float
+    y: float
+    z: float
+
+    @staticmethod
+    def from_dict(document: Dict) -> Sample:
+        return Sample(document["x"], document["y"], document["z"])
+
+
+if __name__ == '__main__':
+    doc = {
+        "_id": ObjectId("62742376fb25904035ab06c9"),
+        "function": "ReLU",
+        "samples": [
+            {"x": 0.1, "y": 0.2, "z": 0.3},
+            {"x": 0.1, "y": 0.2, "z": 0.3},
+            {"x": 0.1, "y": 0.2, "z": 0.3},
+            {"x": 0.1, "y": 0.2, "z": 0.3},
+            {"x": 0.1, "y": 0.2, "z": 0.3},
+            {"x": 0.1, "y": 0.2, "z": 0.3},
+            {"x": 0.1, "y": 0.2, "z": 0.3},
+            {"x": 0.1, "y": 0.2, "z": 0.3},
+            {"x": 0.1, "y": 0.2, "z": 0.3},
+            {"x": 0.1, "y": 0.2, "z": 0.3}
+        ]
+    }
+    dataset = SampleDataset.from_dict(doc)
+    other_doc = dataset.to_dict()
+    x = dataset.to_dataset()
+    print(dataset.to_dataset())
+    print(other_doc)

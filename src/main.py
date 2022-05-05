@@ -5,6 +5,7 @@ from dependency_injector.wiring import Provide, inject
 from src.models.ModelsExecutor import ModelsExecutor
 from src.optimisation.OptimisationExecutor import OptimisationExecutor
 from src.repositories.NeuralModelRepository import NeuralModelRepository
+from src.repositories.SampleDatasetRepository import SampleDatasetRepository
 
 
 class Container(containers.DeclarativeContainer):
@@ -13,11 +14,12 @@ class Container(containers.DeclarativeContainer):
     # Repositories
 
     neural_repository = providers.Singleton(NeuralModelRepository)
+    sample_repository = providers.Singleton(SampleDatasetRepository)
 
     # Executors
 
     optimisation_executor = providers.Singleton(OptimisationExecutor, repository=neural_repository)
-    models_executor = providers.Singleton(ModelsExecutor, repository=neural_repository)
+    models_executor = providers.Singleton(ModelsExecutor, neural_repo=neural_repository, sample_repo=sample_repository)
 
 
 @inject
