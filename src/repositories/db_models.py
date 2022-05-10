@@ -13,17 +13,33 @@ from src.models.FNN import Activation
 
 from dacite import from_dict
 
+# Bounds = Mapping[int, Tuple[float, float]]
+
 
 @dataclass
 class DataModel(ABC):
 
-    def to_dict(self):
+    def to_dict(self) -> Dict:
         return asdict(self)
 
     @staticmethod
     @abstractmethod
     def from_dict(document: Dict):
         pass
+
+
+@dataclass
+class Bounds(DataModel):
+    range: float
+    dim: int = 2
+
+    def from_dict(self, document: Dict) -> Bounds:
+        return from_dict(Bounds, document)
+
+    def to_pyomo_bounds(self) -> Dict:
+        return {
+            i: (-self.range, self.range) for i in range(self.dim)
+        }
 
 
 @dataclass
@@ -56,6 +72,7 @@ class NeuralProperties(DataModel):
 class OptimisationProperties(DataModel):
     x: float
     y: float
+    input_bounds: Bounds
     location_error: float
     optimum_error: float
     computation_time: float

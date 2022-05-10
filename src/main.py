@@ -9,12 +9,13 @@ from src.repositories.SampleDatasetRepository import SampleDatasetRepository
 
 
 class Container(containers.DeclarativeContainer):
-    # config = providers.Configuration(ini_files=["config.ini"])
+    path = "resources/config.ini"
+    config = providers.Configuration(ini_files=[path])
 
     # Repositories
 
-    neural_repository = providers.Singleton(NeuralModelRepository)
-    sample_repository = providers.Singleton(SampleDatasetRepository)
+    neural_repository = providers.Singleton(NeuralModelRepository, uri=config.database.uri)
+    sample_repository = providers.Singleton(SampleDatasetRepository, uri=config.database.uri)
 
     # Executors
 
@@ -24,7 +25,7 @@ class Container(containers.DeclarativeContainer):
 
 @inject
 def main(container: Container = Provide[Container]):
-    optimisation_executor = container.models_executor()
+    optimisation_executor = container.optimisation_executor()
     optimisation_executor.run_all_jobs()
     print("Hello there")
 

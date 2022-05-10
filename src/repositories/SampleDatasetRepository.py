@@ -17,8 +17,8 @@ from src.views.Plot import Plot
 
 class SampleDatasetRepository:
 
-    def __init__(self):
-        self._client = MongoClient()
+    def __init__(self, uri: str):
+        self._client = MongoClient(uri)
         self._db: Database = self._client.NeuralOptimisation
         self._root_collection: Collection = self._db.SampleDataset
         self._sample_collection: Collection = self._db.Sample
@@ -52,7 +52,7 @@ class SampleDatasetRepository:
 
 
 if __name__ == '__main__':
-    repo = SampleDatasetRepository()
+    repo = SampleDatasetRepository(uri="mongodb://localhost:27017")
     for file in os.listdir("../../resources/samples/"):
         raw_dataset = np.loadtxt(f"../../resources/samples/{file}", delimiter=",")
         name, ext = file.split(".")

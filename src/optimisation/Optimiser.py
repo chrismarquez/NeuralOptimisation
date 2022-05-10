@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
-from typing import Callable, Mapping, Tuple
+from typing import Callable
 
 import pandas as pd
 import pyomo.core
@@ -15,8 +15,7 @@ from src.data import functions
 from src.models.FNN import FNN
 # likely from an API design error, omlt.io requires the tensorflow module even if its not being used
 from src.models.LoadableModule import LoadableModule
-
-Bounds = Mapping[int, Tuple[float, float]]
+from src.repositories.db_models import NeuralModel, Bounds
 
 
 class Optimiser:
@@ -59,13 +58,23 @@ class Optimiser:
         return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
 
     @staticmethod
-    def load(path: str, input_bounds: Bounds, build_net: Callable[[], LoadableModule]) -> Optimiser:
+    def load_from_path(path: str, input_bounds: Bounds, build_net: Callable[[], LoadableModule]) -> Optimiser:
+        net = build_net().load(path)
+        return Optimiser._load(net, input_bounds)
+
+    @staticmethod
+    def load_from_model(neural_model: NeuralModel, input_bounds: Bounds) -> Optimiser:
+        _, _, net_size, depth, activation = neural_model.neural_config
+        net = FNN(net_size, depth, activation).load_bytes(neural_model.model_data)
+        return Optimiser._load(net, input_bounds)
+
+    @staticmethod
+    def _load(net: LoadableModule, input_bounds: Bounds) -> Optimiser:
         try:
             from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
-            net = build_net().load(path)
             with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as file:
                 Optimiser._onnx_export(net, file)
-                write_onnx_model_with_bounds(file.name, None, input_bounds)
+                write_onnx_model_with_bounds(file.name, None, input_bounds.to_pyomo_bounds())
                 network_definition = load_onnx_neural_network_with_bounds(file.name)
                 return Optimiser(network_definition)
         except ModuleNotFoundError:
@@ -99,12 +108,10 @@ class Optimiser:
 
 if __name__ == '__main__':
     [x_max] = [x_max for fn, x_max in functions.pool.items() if fn == functions.sum_squares]
-    input_bounds: Bounds = {
-        i: (-0.2, 0.2) for i in range(2)
-    }
+    input_bounds: Bounds = Bounds(0.2)
     print(input_bounds)
     net = FNN(10, 2, "ReLU")
-    optimiser = Optimiser.load("../../resources/trained/test/sum_squares.pt", input_bounds, lambda: net)
+    optimiser = Optimiser.load_from_path("../../resources/trained/test/sum_squares.pt", input_bounds, lambda: net)
     values = optimiser.solve()
     print(values)
 
