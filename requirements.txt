@@ -50,3 +50,4 @@ uuid==1.30
 omlt~=1.0
 Pyomo~=6.4.0
 onnx~=1.11.0
+dependency-injector==4.39.1
