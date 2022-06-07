@@ -2,10 +2,10 @@
 from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 
-from src.models.ModelsExecutor import ModelsExecutor
-from src.optimisation.OptimisationExecutor import OptimisationExecutor
-from src.repositories.NeuralModelRepository import NeuralModelRepository
-from src.repositories.SampleDatasetRepository import SampleDatasetRepository
+from models.ModelsExecutor import ModelsExecutor
+from optimisation.OptimisationExecutor import OptimisationExecutor
+from repositories.NeuralModelRepository import NeuralModelRepository
+from repositories.SampleDatasetRepository import SampleDatasetRepository
 
 
 class Container(containers.DeclarativeContainer):
