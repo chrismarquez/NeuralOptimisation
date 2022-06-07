@@ -8,8 +8,8 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 from tqdm import tqdm
 
-from src.repositories.db_models import NeuralModel, NeuralProperties, OptimisationProperties, NeuralConfig, Bounds
-from src.views.Plot import Plot
+from repositories.db_models import NeuralModel, NeuralProperties, OptimisationProperties, NeuralConfig, Bounds
+from views.Plot import Plot
 
 
 class NeuralModelRepository:

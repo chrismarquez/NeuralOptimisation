@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from typing import Dict
 
-from src.cluster.Job import Job
-from src.data.Dataset import Dataset
-from src.models.Estimator import Estimator
-from src.models.GridSearch import GridSearch
-from src.repositories.NeuralModelRepository import NeuralModelRepository
+from cluster.Job import Job
+from data.Dataset import Dataset
+from models.Estimator import Estimator
+from models.GridSearch import GridSearch
+from repositories.NeuralModelRepository import NeuralModelRepository
 
 
 @dataclass

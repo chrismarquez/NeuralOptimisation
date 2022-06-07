@@ -7,11 +7,11 @@ import numpy as np
 import torch
 from sklearn.base import BaseEstimator, RegressorMixin
 
-from src.models.FNN import FNN
-from src.models.Regressor import Regressor
-from src.models.Trainer import Trainer
-from src.repositories.NeuralModelRepository import NeuralModelRepository
-from src.repositories.db_models import NeuralConfig, NeuralProperties, NeuralModel
+from models.FNN import FNN
+from models.Regressor import Regressor
+from models.Trainer import Trainer
+from repositories.NeuralModelRepository import NeuralModelRepository
+from repositories.db_models import NeuralConfig, NeuralProperties, NeuralModel
 
 LayerSize = int
 NetworkDepth = int

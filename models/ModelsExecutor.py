@@ -1,11 +1,11 @@
 import math
 from typing import List
 
-from src.cluster.Executor import Executor
-from src.cluster.Job import Job
-from src.models.ModelJob import ModelJob
-from src.repositories.NeuralModelRepository import NeuralModelRepository
-from src.repositories.SampleDatasetRepository import SampleDatasetRepository
+from cluster.Executor import Executor
+from cluster.Job import Job
+from models.ModelJob import ModelJob
+from repositories.NeuralModelRepository import NeuralModelRepository
+from repositories.SampleDatasetRepository import SampleDatasetRepository
 
 
 class ModelsExecutor(Executor):

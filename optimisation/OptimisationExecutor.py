@@ -1,10 +1,10 @@
 from typing import List
 
-from src.cluster.Executor import Executor
-from src.cluster.Job import Job
-from src.optimisation.OptimisationJob import OptimisationJob
-from src.repositories.NeuralModelRepository import NeuralModelRepository
-from src.repositories.db_models import Bounds
+from cluster.Executor import Executor
+from cluster.Job import Job
+from optimisation.OptimisationJob import OptimisationJob
+from repositories.NeuralModelRepository import NeuralModelRepository
+from repositories.db_models import Bounds
 
 
 class OptimisationExecutor(Executor):

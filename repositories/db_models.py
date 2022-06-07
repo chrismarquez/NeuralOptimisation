@@ -8,8 +8,8 @@ from typing import Optional, Dict, List
 import numpy as np
 from bson import ObjectId
 
-from src.data.Dataset import Dataset
-from src.models.FNN import Activation
+from data.Dataset import Dataset
+from models.FNN import Activation
 
 from dacite import from_dict
 

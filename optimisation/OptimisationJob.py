@@ -2,10 +2,10 @@ from dataclasses import dataclass
 
 from sklearn import metrics
 
-from src.cluster.Job import Job
-from src.optimisation.Optimiser import Optimiser, Bounds
-from src.repositories.NeuralModelRepository import NeuralModelRepository
-from src.repositories.db_models import OptimisationProperties
+from cluster.Job import Job
+from optimisation.Optimiser import Optimiser, Bounds
+from repositories.NeuralModelRepository import NeuralModelRepository
+from repositories.db_models import OptimisationProperties
 
 
 @dataclass

@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 import os
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 from bson import ObjectId
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
-from tqdm import tqdm
 
-from src.repositories.db_models import NeuralModel, NeuralProperties, OptimisationProperties, NeuralConfig, \
-    SampleDataset, Sample
-from src.views.Plot import Plot
+from repositories.db_models import SampleDataset, Sample
 
 
 class SampleDatasetRepository:
@@ -53,7 +50,7 @@ class SampleDatasetRepository:
 
 if __name__ == '__main__':
     repo = SampleDatasetRepository(uri="mongodb://localhost:27017")
-    for file in os.listdir("../../resources/samples/"):
+    for file in os.listdir("../resources/samples/"):
         raw_dataset = np.loadtxt(f"../../resources/samples/{file}", delimiter=",")
         name, ext = file.split(".")
         samples = [

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from src.cluster.Job import Job
+from cluster.Job import Job
 
 
 class Executor(ABC):

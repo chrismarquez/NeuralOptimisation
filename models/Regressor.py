@@ -3,8 +3,8 @@ from sklearn import metrics
 import torch
 from torch import nn
 
-from src.data.Dataset import Dataset
-from src.models.FNN import FNN
+from data.Dataset import Dataset
+from models.FNN import FNN
 
 
 class Regressor:

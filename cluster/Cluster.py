@@ -25,6 +25,6 @@ class Cluster:
 
 
 if __name__ == '__main__':
-    cluster = Cluster("/home/christopher/PycharmProjects/neuralOptimisation/")
+    cluster = Cluster("//")
     config = cluster.get_job_config()
     print(config)
