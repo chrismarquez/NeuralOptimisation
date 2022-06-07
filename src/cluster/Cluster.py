@@ -20,6 +20,9 @@ class Cluster:
             "request_disk": "128MB"
         }
 
+    def exec(self, config):
+        htcondor.Submit(config)
+
 
 if __name__ == '__main__':
     cluster = Cluster("/home/christopher/PycharmProjects/neuralOptimisation/")
