@@ -22,8 +22,8 @@ class Plot:
 
     @staticmethod
     def load_data(function: str) -> pd.DataFrame:
-        df_training = pd.read_csv(f"trained/metadata/{function}.csv", delimiter=",")
-        df_optimisation = pd.read_csv(f"trained/optimisation/{function}.csv", delimiter=",")
+        df_training = pd.read_csv(f"../../resources/trained/metadata/{function}.csv", delimiter=",")
+        df_optimisation = pd.read_csv(f"../../resources/trained/optimisation/{function}.csv", delimiter=",")
         df = df_training.set_index('id').join(df_optimisation.set_index('id'))
         df = df[df["activation_fn"] == "ReLU"]
         return df

@@ -1,5 +1,6 @@
 import gc
 import os
+import tempfile
 from decimal import Decimal
 from typing import List, Tuple
 
@@ -44,6 +45,14 @@ class Trainer:
         if not os.path.exists(path):
             os.mkdir(path)
         torch.save(self._net.state_dict(), f"{path}/{name}.pt")
+
+    def get_model_data(self) -> bytes:
+        self._net.eval()
+        with tempfile.NamedTemporaryFile(suffix=".pt", delete=False) as file:
+            torch.save(self._net.state_dict(), file)
+            file.seek(0)
+            x = file.read()
+            return x
 
     def _train_epoch(self, batches: List[Batch]) -> float:
         running_loss = 0.0
