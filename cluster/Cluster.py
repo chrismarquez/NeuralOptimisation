@@ -15,7 +15,7 @@ class Cluster:
         return int(raw_job_id)
 
     def submit(self) -> int:
-        cmd = f"sbatch test.py"
+        cmd = f"sbatch slurmseg.sh"
         result = subprocess.run(cmd, shell=True, capture_output=True)
         return Cluster._parse_job_id(str(result.stdout))
 
