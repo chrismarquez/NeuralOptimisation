@@ -9,7 +9,6 @@ from pymongo.database import Database
 from tqdm import tqdm
 
 from repositories.db_models import NeuralModel, NeuralProperties, OptimisationProperties, NeuralConfig, Bounds
-from views.Plot import Plot
 
 
 class NeuralModelRepository:
@@ -56,6 +55,7 @@ class NeuralModelRepository:
 
 
 if __name__ == '__main__':
+    from views.Plot import Plot
     repo = NeuralModelRepository(uri="mongodb://localhost:27017")
     input_bounds = Bounds(0.2)
     for function in tqdm(["ackley", "rastrigin", "rosenbrock", "sum_squares"], colour="green"):

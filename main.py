@@ -46,7 +46,9 @@ def main(container: Container = Provide[Container]):
 
 
 if __name__ == '__main__':
+    print("Loading Container...")
     container = Container()
     container.init_resources()
     container.wire(modules=[__name__])
+    print("Container ready.")
     main()
