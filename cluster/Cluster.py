@@ -17,12 +17,12 @@ class Cluster:
     def submit(self) -> int:
         cmd = f"sbatch slurmseg.sh"
         result = subprocess.run(cmd, shell=True, capture_output=True)
-        return Cluster._parse_job_id(str(result.stdout))
+        return Cluster._parse_job_id(result.stdout.decode("utf-8"))
 
     def status(self, job_id: int) -> JobStatus:
         cmd = f"scontrol show job <job_id>".replace("<job_id>", str(job_id))
         result = subprocess.run(cmd, shell=True, capture_output=True)
-        return JobStatus.from_log(str(result.stdout))
+        return JobStatus.from_log(result.stdout.decode("utf-8"))
 
 
 if __name__ == '__main__':
