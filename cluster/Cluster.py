@@ -7,7 +7,8 @@ class Cluster:
     def __init__(self, root_dir):
         self.root_dir = root_dir
         self.log_dir = os.path.join(self.root_dir, "resources/logs")
-        self.scheduler = htcondor.Schedd()
+        scheduler_daemon = htcondor.Collector().locate(htcondor.DaemonTypes.Schedd)
+        self.scheduler = htcondor.Schedd(scheduler_daemon)
 
     def get_job_config(self):
         return {
