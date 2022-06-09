@@ -1,34 +1,34 @@
-import os
+import subprocess
+from time import sleep
 
-import htcondor
+from cluster.JobStatus import JobStatus
+
 
 class Cluster:
 
-    def __init__(self, root_dir):
-        self.root_dir = root_dir
-        self.log_dir = os.path.join(self.root_dir, "resources/logs")
-        scheduler_daemon = htcondor.Collector().locate(htcondor.DaemonTypes.Schedd)
-        self.scheduler = htcondor.Schedd(scheduler_daemon)
+    def __init__(self):
+        pass
 
-    def get_job_config(self):
-        return {
-            "executable": "echo Hello",  # the program to run on the execute node
-            "output": f"{self.log_dir}/stdout.log",
-            "error": f"{self.log_dir}/stderr.log",
-            "log": f"{self.log_dir}/metadata.log",
-            "request_cpus": "1",
-            "request_memory": "128MB",
-            "request_disk": "128MB"
-        }
+    @staticmethod
+    def _parse_job_id(result: str) -> int:
+        raw_job_id = result.rstrip().split("Submitted batch job ")[-1]
+        return int(raw_job_id)
 
-    def exec(self, config):
-        job = htcondor.Submit(config)
-        result = self.scheduler.submit(job)
-        print(result.cluster())
+    def submit(self) -> int:
+        cmd = f"sbatch test.py"
+        result = subprocess.run(cmd, shell=True, capture_output=True)
+        return Cluster._parse_job_id(str(result.stdout))
 
+    def status(self, job_id: int) -> JobStatus:
+        cmd = f"scontrol show job <job_id>".replace("<job_id>", str(job_id))
+        result = subprocess.run(cmd, shell=True, capture_output=True)
+        return JobStatus.from_log(str(result.stdout))
 
 
 if __name__ == '__main__':
-    cluster = Cluster("//")
-    config = cluster.get_job_config()
-    print(config)
+    cluster = Cluster()
+    job_id = cluster.submit()
+    print(job_id)
+    sleep(1)
+    status = cluster.status(job_id)
+    print(status)
