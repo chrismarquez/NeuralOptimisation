@@ -13,6 +13,7 @@ from constants import ROOT_DIR
 
 
 class Container(containers.DeclarativeContainer):
+    print("Initialising dependencies...")
     path = "resources/config.ini"
     config = providers.Configuration(ini_files=[path])
 
@@ -30,6 +31,8 @@ class Container(containers.DeclarativeContainer):
     optimisation_executor = providers.Singleton(OptimisationExecutor, repository=neural_repository)
     models_executor = providers.Singleton(ModelsExecutor, neural_repo=neural_repository, sample_repo=sample_repository)
 
+    print("Dependencies ready.")
+
 
 @inject
 def main(container: Container = Provide[Container]):
@@ -39,6 +42,7 @@ def main(container: Container = Provide[Container]):
     cluster = container.cluster()
     config = cluster.get_job_config()
     print(config)
+    cluster.exec(config)
 
 
 if __name__ == '__main__':
