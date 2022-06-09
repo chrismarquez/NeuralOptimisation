@@ -1,13 +1,13 @@
 import os
 
 import htcondor
-import sys
 
 class Cluster:
 
     def __init__(self, root_dir):
         self.root_dir = root_dir
         self.log_dir = os.path.join(self.root_dir, "resources/logs")
+        self.scheduler = htcondor.Schedd()
 
     def get_job_config(self):
         return {
@@ -21,7 +21,10 @@ class Cluster:
         }
 
     def exec(self, config):
-        htcondor.Submit(config)
+        job = htcondor.Submit(config)
+        result = self.scheduler.submit(job)
+        print(result.cluster())
+
 
 
 if __name__ == '__main__':
