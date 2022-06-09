@@ -11,7 +11,7 @@ class Cluster:
 
     @staticmethod
     def _parse_job_id(result: str) -> int:
-        raw_job_id = result.rstrip().split("Submitted batch job ")[-1]
+        raw_job_id = result.rstrip("\\n").split("Submitted batch job ")[-1]
         return int(raw_job_id)
 
     def submit(self) -> int:
