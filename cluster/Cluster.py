@@ -1,7 +1,7 @@
 import subprocess
 from time import sleep
 
-import JobStatus
+from JobStatus import JobStatus
 
 
 class Cluster:
