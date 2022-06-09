@@ -49,7 +49,3 @@ if __name__ == '__main__':
     with open("../resources/cluster/scontrol_running.txt") as f:
         raw = f.read()
         print(JobStatus.from_log(raw))
-
-
-def from_log(param):
-    return None

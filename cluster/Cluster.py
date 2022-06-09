@@ -25,7 +25,6 @@ class Cluster:
         cmd = f"scontrol show job <job_id>".replace("<job_id>", str(job_id))
         result = subprocess.run(cmd, shell=True, capture_output=True)
         output = result.stdout.decode("utf-8")
-        print(output)
         return JobStatus.from_log(output)
 
 
