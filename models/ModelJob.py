@@ -34,8 +34,6 @@ class ModelJob(Job):
             estimator.score(x_test, y_test)
 
 
-
-
-
 if __name__ == '__main__':  # Prepare this to be used as job trigger-able
-    pass
+    print("Invoked by sbatch")
+
