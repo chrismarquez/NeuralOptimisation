@@ -1,3 +1,3 @@
 import os
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__)).split("/src")[0]
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))

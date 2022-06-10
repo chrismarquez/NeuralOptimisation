@@ -15,7 +15,7 @@ class JobStatus:
     std_err: str
     cmd: str
     work_dir: str
-    node: str
+    node: Optional[str]
     exit_code: Optional[str]
 
     def get_std_out(self):
@@ -40,7 +40,7 @@ class JobStatus:
             std_err=attributes["StdErr"],
             cmd=attributes["Command"],
             work_dir=attributes["WorkDir"],
-            node=attributes["BatchHost"],
+            node=attributes.get("BatchHost", None),
             exit_code=attributes.get("ExitCode", None)
         )
 

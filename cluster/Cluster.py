@@ -1,3 +1,4 @@
+import inspect
 import subprocess
 import tempfile
 from time import sleep
@@ -18,15 +19,19 @@ class Cluster:
         return int(raw_job_id)
 
     def submit(self, target: str) -> int:
-        cmd = f"source {self.root_dir}/venv/bin/activate && python3 {self.root_dir}/{target}"
-        with tempfile.NamedTemporaryFile(suffix=".pt", delete=False) as file:
-            file.write(f"#!/bin/bash\n{cmd}")
+        cmd = inspect.cleandoc(f"""
+            #!/bin/bash
+            source {self.root_dir}/venv/bin/activate
+            python3 {self.root_dir}/{target}
+        """)
+        with tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w") as file:
+            file.write(cmd)
             script = file.name
-            sbatch = f"sbatch {script}"
-            result = subprocess.run(sbatch, shell=True, capture_output=True)
-            output = result.stdout.decode("utf-8")
-            print(output)
-            return Cluster._parse_job_id(output)
+            print(script)
+        sbatch = f"sbatch {script}"
+        result = subprocess.run(sbatch, shell=True, capture_output=True)
+        output = result.stdout.decode("utf-8")
+        return Cluster._parse_job_id(output)
 
     def status(self, job_id: int) -> JobStatus:
         cmd = f"scontrol show job <job_id>".replace("<job_id>", str(job_id))
@@ -37,9 +42,9 @@ class Cluster:
 
 if __name__ == '__main__':
     import os
-    ROOT_DIR = os.path.dirname(os.path.abspath(__file__)).split("/src")[0]
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__)).split("/cluster")[0]
     cluster = Cluster(ROOT_DIR)
-    job_id = cluster.submit("/src/models/ModelJob.py")
+    job_id = cluster.submit("models/ModelJob.py")
     print(job_id)
     sleep(1)
     status = cluster.status(job_id)
