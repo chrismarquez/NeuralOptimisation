@@ -34,6 +34,10 @@ class SampleDatasetRepository:
         id_list = [str(doc["_id"]) for doc in documents]
         return [self.get(id) for id in id_list]
 
+    def get_all_dataset_id(self):
+        id_list = self._root_collection.find().distinct("_id")
+        return [str(dataset_id) for dataset_id in id_list]
+
     def save(self, model: SampleDataset) -> None:
         document = model.to_dict()
         del document["id"]

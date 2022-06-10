@@ -22,7 +22,7 @@ class Cluster:
         cmd = inspect.cleandoc(f"""
             #!/bin/bash
             source {self.root_dir}/venv/bin/activate
-            python3 {self.root_dir}/{target}
+            python3 {self.root_dir}/{target} 
         """)
         with tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w") as file:
             file.write(cmd)

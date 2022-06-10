@@ -12,6 +12,8 @@ from repositories.SampleDatasetRepository import SampleDatasetRepository
 from constants import ROOT_DIR
 
 
+# TODO: Put relevant Containers to dependency inject both jobs inside cluster and the main driver program
+
 class Container(containers.DeclarativeContainer):
     print("Initialising dependencies...")
     path = "resources/config.ini"

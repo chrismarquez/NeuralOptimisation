@@ -3,6 +3,7 @@ from typing import List
 
 from cluster.Executor import Executor
 from cluster.Job import Job
+from models.GridSearch import GridSearch
 from models.ModelJob import ModelJob
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
@@ -17,13 +18,13 @@ class ModelsExecutor(Executor):
 
     def _get_jobs(self) -> List[Job]:
         hyper_params = ModelsExecutor._get_hyper_params()
+        searcher = GridSearch()
         jobs = []
-        for sample_dataset in self._sample_repo.get_all():
-            function_name = sample_dataset.function
-            dataset = sample_dataset.to_dataset()
-            job = ModelJob(function_name, dataset, hyper_params, self._neural_repo)
-            jobs.append(job)
-            print(f"Computing params of function: {function_name}")
+        for dataset_id in self._sample_repo.get_all_dataset_id():
+            config_pool = searcher.get_sequence(hyper_params)
+            for config in config_pool:
+                job = ModelJob(dataset_id, config, self._neural_repo, self._sample_repo)
+                jobs.append(job)
         return jobs
 
     @staticmethod
