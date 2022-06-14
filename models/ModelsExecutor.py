@@ -7,7 +7,6 @@ from cluster.Executor import Executor
 from cluster.Job import Job
 from models.GridSearch import GridSearch
 from models.ModelJob import ModelJob
-from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
 
 
@@ -46,12 +45,6 @@ class ModelsExecutor(Executor):
 
 
 if __name__ == '__main__':
-    sample = SampleDatasetRepository("mongodb://localhost:27017")
+    sample = SampleDatasetRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
     executor = ModelsExecutor(sample)
-    job = executor._get_jobs()[0]
-    print(job)
-    encoded = job.encode()
-    print(encoded)
-    recovered = Job.decode(encoded)
-    print(recovered)
-    # TODO: Pickle test :>
+    executor.run_all_jobs(use_cluster=True, test_run=True)
