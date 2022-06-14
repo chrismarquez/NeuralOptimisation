@@ -45,7 +45,7 @@ class Estimator(BaseEstimator, RegressorMixin):
             params_class = round(trainable_params / 10_000.0) * 10
             self.trainer = Trainer(self.net, lr=learning_rate, batch_size=batch_size)
             details = f"Size [{network_size}] Depth [{depth}] Params [{trainable_params}]  Class[{params_class} k]  Activation [{activation_fn}] "
-            self.trainer.train(x_train, y_train, self.epochs,details=details)
+            self.trainer.train(x_train, y_train, self.epochs, details=details)
             self.regressor = Regressor(self.net)
         else:
             self.should_save = False
