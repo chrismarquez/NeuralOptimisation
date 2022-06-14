@@ -19,7 +19,7 @@ class Cluster:
         return int(raw_job_id)
 
     def submit(self, job: Job) -> int:
-        cmd = inspect.cleandoc(f"""M
+        cmd = inspect.cleandoc(f"""
             #!/bin/bash
             source {self.root_dir}/venv/bin/activate
             {job.as_command()}

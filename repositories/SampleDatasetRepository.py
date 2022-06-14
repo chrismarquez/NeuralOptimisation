@@ -53,9 +53,9 @@ class SampleDatasetRepository:
 
 
 if __name__ == '__main__':
-    repo = SampleDatasetRepository(uri="mongodb://localhost:27017")
+    repo = SampleDatasetRepository(uri="mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
     for file in os.listdir("../resources/samples/"):
-        raw_dataset = np.loadtxt(f"../../resources/samples/{file}", delimiter=",")
+        raw_dataset = np.loadtxt(f"../resources/samples/{file}", delimiter=",")
         name, ext = file.split(".")
         samples = [
             {
