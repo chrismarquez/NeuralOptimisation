@@ -15,6 +15,7 @@ from repositories.db_models import SampleDataset, Sample
 class SampleDatasetRepository:
 
     def __init__(self, uri: str):
+        print(f"Connecting to DB at: {uri}")
         self._client = MongoClient(uri)
         self._db: Database = self._client.NeuralOptimisation
         self._root_collection: Collection = self._db.SampleDataset

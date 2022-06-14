@@ -14,6 +14,7 @@ from repositories.db_models import NeuralModel, NeuralProperties, OptimisationPr
 class NeuralModelRepository:
 
     def __init__(self, uri: str):
+        print(f"Connecting to DB at: {uri}")
         self._client = MongoClient(uri)
         self._db: Database = self._client.NeuralOptimisation
         self._collection: Collection = self._db.NeuralModel

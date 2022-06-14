@@ -12,6 +12,7 @@ class JobContainer(containers.DeclarativeContainer):
 
     env = get_env()
     config_file = get_config(env)
+    print(f"Environment: {env}. Using config file: {config_file}")
 
     path = f"../resources/{config_file}"
     config = providers.Configuration(ini_files=[path])
