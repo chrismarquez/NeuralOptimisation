@@ -43,10 +43,15 @@ class Cluster:
 
 if __name__ == '__main__':
     import os
+    from repositories.SampleDatasetRepository import SampleDatasetRepository
+    from models.ModelsExecutor import ModelsExecutor
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__)).split("/cluster")[0]
     cluster = Cluster(ROOT_DIR)
-    job_id = cluster.submit("models/ModelJob.py")
+    sample = SampleDatasetRepository("mongodb://localhost:27017")
+    executor = ModelsExecutor(sample)
+    job = executor._get_jobs()[0]
+    job_id = cluster.submit(job)
     print(job_id)
-    sleep(1)
+    sleep(2)
     status = cluster.status(job_id)
     print(status)
