@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from sklearn import metrics
 
 from cluster.Job import Job
+from cluster.JobContainer import JobContainer
 from optimisation.Optimiser import Optimiser, Bounds
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.db_models import OptimisationProperties
@@ -14,7 +15,7 @@ class OptimisationJob(Job):
     model_id: str
     input_bounds: Bounds
 
-    def run(self):
+    def run(self, container: JobContainer):
         neural_model = self.neural_repo.get(self.model_id)
         optimiser = Optimiser.load_from_model(neural_model, self.input_bounds)
         _, _, nodes, depth, _ = neural_model.neural_config
