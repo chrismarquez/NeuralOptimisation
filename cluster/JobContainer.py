@@ -6,7 +6,7 @@ from repositories.SampleDatasetRepository import SampleDatasetRepository
 
 class JobContainer(containers.DeclarativeContainer):
     print("Initialising dependencies...")
-    path = "resources/config.ini"
+    path = "../resources/config.ini"
     config = providers.Configuration(ini_files=[path])
 
     # Repositories

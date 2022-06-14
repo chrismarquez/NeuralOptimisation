@@ -1,4 +1,3 @@
-import sys
 import argparse
 from dataclasses import dataclass
 
@@ -30,6 +29,9 @@ class ModelJob(Job):
         estimator = Estimator(neural_repo, name=function_name, config=self.config, epochs=5, should_save=True)
         estimator.fit(x_train, y_train)
         estimator.score(x_test, y_test)
+
+    def as_command(self) -> str:
+        return f"python3 -m models.ModelJob --job {self.encode()}"
 
 
 @inject

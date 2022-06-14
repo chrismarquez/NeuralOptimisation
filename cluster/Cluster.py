@@ -5,6 +5,7 @@ from time import sleep
 
 
 from JobStatus import JobStatus
+from cluster import Job
 
 
 class Cluster:
@@ -18,11 +19,11 @@ class Cluster:
         raw_job_id = result.rstrip("\\n").split("Submitted batch job ")[-1]
         return int(raw_job_id)
 
-    def submit(self, target: str) -> int:
-        cmd = inspect.cleandoc(f"""
+    def submit(self, job: Job) -> int:
+        cmd = inspect.cleandoc(f"""M
             #!/bin/bash
             source {self.root_dir}/venv/bin/activate
-            python3 {self.root_dir}/{target} 
+            {job.as_command()}
         """)
         with tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w") as file:
             file.write(cmd)

@@ -16,6 +16,10 @@ class Job(ABC):
     def run(self, container: JobContainer):
         pass
 
+    @abstractmethod
+    def as_command(self) -> str:
+        pass
+
     def encode(self) -> str:
         return base64.b64encode(pickle.dumps(self)).decode()
 
