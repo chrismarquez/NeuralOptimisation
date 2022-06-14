@@ -1,12 +1,19 @@
+
 from dependency_injector import containers, providers
 
+from constants import get_config, get_env
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
 
 
 class JobContainer(containers.DeclarativeContainer):
+
     print("Initialising dependencies...")
-    path = "../resources/config.ini"
+
+    env = get_env()
+    config_file = get_config(env)
+
+    path = f"../resources/{config_file}"
     config = providers.Configuration(ini_files=[path])
 
     # Repositories

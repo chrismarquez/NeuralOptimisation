@@ -3,8 +3,7 @@ import subprocess
 import tempfile
 from time import sleep
 
-
-from JobStatus import JobStatus
+from cluster.JobStatus import JobStatus
 from cluster import Job
 
 
@@ -47,7 +46,7 @@ if __name__ == '__main__':
     from models.ModelsExecutor import ModelsExecutor
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__)).split("/cluster")[0]
     cluster = Cluster(ROOT_DIR)
-    sample = SampleDatasetRepository("mongodb://localhost:27017")
+    sample = SampleDatasetRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
     executor = ModelsExecutor(sample)
     job = executor._get_jobs()[0]
     job_id = cluster.submit(job)

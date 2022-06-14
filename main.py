@@ -9,14 +9,17 @@ from optimisation.OptimisationExecutor import OptimisationExecutor
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
 
-from constants import ROOT_DIR
+from constants import ROOT_DIR, get_env, get_config
 
 
 # TODO: Put relevant Containers to dependency inject both jobs inside cluster and the main driver program
 
 class Container(containers.DeclarativeContainer):
     print("Initialising dependencies...")
-    path = "resources/config.ini"
+
+    env = get_env()
+    config_file = get_config(env)
+    path = f"resources/{config_file}"
     config = providers.Configuration(ini_files=[path])
 
     # Cluster
