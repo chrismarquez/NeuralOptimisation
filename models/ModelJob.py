@@ -1,12 +1,11 @@
-import argparse
 from dataclasses import dataclass
 
-from dependency_injector.wiring import Provide, inject
-
-from cluster.Job import Job
-from cluster.JobContainer import JobContainer
+from cluster.Job import Job, JobType
 from models.Estimator import Estimator
 from repositories.db_models import NeuralConfig
+
+from cluster.JobContainer import JobContainer
+from cluster.JobInit import init_job
 
 
 @dataclass
@@ -33,24 +32,9 @@ class ModelJob(Job):
     def as_command(self) -> str:
         return f"python3 -m models.ModelJob --job {self.encode()}"
 
-
-@inject
-def main(encoded_job: str, container: JobContainer = Provide[JobContainer]):
-    job = Job.decode(encoded_job)
-    job.run(container)
+    def get_job_type(self) -> JobType:
+        return "GPU"
 
 
 if __name__ == '__main__':  # Prepare this to be used as job trigger-
-
-    container = JobContainer()
-    container.init_resources()
-    container.wire(modules=[__name__])
-
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument(
-        '--job',
-        type=str,
-        help="ModelJob encoded as b64 pickle"
-    )
-    args = parser.parse_args()
-    main(args.job)
+    init_job("ModelJob")

@@ -3,9 +3,11 @@ from __future__ import annotations
 import base64
 import pickle
 from abc import ABC, abstractmethod
+from typing import Literal
 
 from cluster.JobContainer import JobContainer
 
+JobType = Literal["GPU", "CPU"]
 
 class Job(ABC):
 
@@ -18,6 +20,10 @@ class Job(ABC):
 
     @abstractmethod
     def as_command(self) -> str:
+        pass
+
+    @abstractmethod
+    def get_job_type(self) -> JobType:
         pass
 
     def encode(self) -> str:
