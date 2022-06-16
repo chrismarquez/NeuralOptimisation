@@ -1,29 +1,30 @@
+import base64
 import math
+import pickle
 from typing import List
 
-from src.cluster.Executor import Executor
-from src.cluster.Job import Job
-from src.models.ModelJob import ModelJob
-from src.repositories.NeuralModelRepository import NeuralModelRepository
-from src.repositories.SampleDatasetRepository import SampleDatasetRepository
+from cluster.Executor import Executor
+from cluster.Job import Job
+from models.GridSearch import GridSearch
+from models.ModelJob import ModelJob
+from repositories.SampleDatasetRepository import SampleDatasetRepository
 
 
 class ModelsExecutor(Executor):
 
-    def __init__(self, neural_repo: NeuralModelRepository, sample_repo: SampleDatasetRepository):
+    def __init__(self, sample_repo: SampleDatasetRepository):
         super().__init__()
-        self._neural_repo = neural_repo
         self._sample_repo = sample_repo
 
     def _get_jobs(self) -> List[Job]:
         hyper_params = ModelsExecutor._get_hyper_params()
+        searcher = GridSearch()
         jobs = []
-        for sample_dataset in self._sample_repo.get_all():
-            function_name = sample_dataset.function
-            dataset = sample_dataset.to_dataset()
-            job = ModelJob(function_name, dataset, hyper_params, self._neural_repo)
-            jobs.append(job)
-            print(f"Computing params of function: {function_name}")
+        for dataset_id in self._sample_repo.get_all_dataset_id():
+            config_pool = searcher.get_sequence(hyper_params)
+            for config in config_pool:
+                job = ModelJob(dataset_id, config)
+                jobs.append(job)
         return jobs
 
     @staticmethod
@@ -44,7 +45,6 @@ class ModelsExecutor(Executor):
 
 
 if __name__ == '__main__':
-    neural = NeuralModelRepository()
-    sample = SampleDatasetRepository()
-    executor = ModelsExecutor(neural, sample)
-    executor.run_all_jobs()
+    sample = SampleDatasetRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
+    executor = ModelsExecutor(sample)
+    executor.run_all_jobs(use_cluster=True, test_run=True)

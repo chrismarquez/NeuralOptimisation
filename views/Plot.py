@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from src.data.functions import Function2D
-from src.models.FNN import FNN
+from data.functions import Function2D
+from models.FNN import FNN
 
 Transform = Callable[[float], float]
 

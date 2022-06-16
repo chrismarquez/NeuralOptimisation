@@ -1,23 +1,21 @@
 from __future__ import annotations
 
 import os
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 from bson import ObjectId
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
-from tqdm import tqdm
 
-from src.repositories.db_models import NeuralModel, NeuralProperties, OptimisationProperties, NeuralConfig, \
-    SampleDataset, Sample
-from src.views.Plot import Plot
+from repositories.db_models import SampleDataset, Sample
 
 
 class SampleDatasetRepository:
 
     def __init__(self, uri: str):
+        print(f"Connecting to DB at: {uri}")
         self._client = MongoClient(uri)
         self._db: Database = self._client.NeuralOptimisation
         self._root_collection: Collection = self._db.SampleDataset
@@ -37,6 +35,10 @@ class SampleDatasetRepository:
         id_list = [str(doc["_id"]) for doc in documents]
         return [self.get(id) for id in id_list]
 
+    def get_all_dataset_id(self):
+        id_list = self._root_collection.find().distinct("_id")
+        return [str(dataset_id) for dataset_id in id_list]
+
     def save(self, model: SampleDataset) -> None:
         document = model.to_dict()
         del document["id"]
@@ -52,9 +54,9 @@ class SampleDatasetRepository:
 
 
 if __name__ == '__main__':
-    repo = SampleDatasetRepository(uri="mongodb://localhost:27017")
-    for file in os.listdir("../../resources/samples/"):
-        raw_dataset = np.loadtxt(f"../../resources/samples/{file}", delimiter=",")
+    repo = SampleDatasetRepository(uri="mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
+    for file in os.listdir("../resources/samples/"):
+        raw_dataset = np.loadtxt(f"../resources/samples/{file}", delimiter=",")
         name, ext = file.split(".")
         samples = [
             {

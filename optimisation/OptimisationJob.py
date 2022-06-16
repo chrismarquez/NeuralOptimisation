@@ -2,20 +2,21 @@ from dataclasses import dataclass
 
 from sklearn import metrics
 
-from src.cluster.Job import Job
-from src.optimisation.Optimiser import Optimiser, Bounds
-from src.repositories.NeuralModelRepository import NeuralModelRepository
-from src.repositories.db_models import OptimisationProperties
+from cluster.Job import Job, JobType
+from cluster.JobContainer import JobContainer
+from cluster.JobInit import init_job
+from optimisation.Optimiser import Optimiser, Bounds
+from repositories.db_models import OptimisationProperties
 
 
 @dataclass
 class OptimisationJob(Job):
-    neural_repo: NeuralModelRepository
     model_id: str
     input_bounds: Bounds
 
-    def run(self):
-        neural_model = self.neural_repo.get(self.model_id)
+    def run(self, container: JobContainer):
+        neural_repo = container.neural_repository()
+        neural_model = neural_repo.get(self.model_id)
         optimiser = Optimiser.load_from_model(neural_model, self.input_bounds)
         _, _, nodes, depth, _ = neural_model.neural_config
         print(f"Size [{nodes}] Depth [{depth}]")
@@ -26,4 +27,14 @@ class OptimisationJob(Job):
         neural_model.optimisation_properties = OptimisationProperties(
             x_opt, y_opt, self.input_bounds, location_error, optimum_error, computation_time
         )
-        self.neural_repo.update(neural_model)
+        neural_repo.update(neural_model)
+
+    def as_command(self) -> str:
+        return f"python3 -m optimisation.OptimisationJob --job {self.encode()}"
+
+    def get_job_type(self) -> JobType:
+        return "CPU"
+
+
+if __name__ == '__main__':
+    init_job("OptimisationJob")

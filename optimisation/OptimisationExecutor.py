@@ -1,10 +1,10 @@
 from typing import List
 
-from src.cluster.Executor import Executor
-from src.cluster.Job import Job
-from src.optimisation.OptimisationJob import OptimisationJob
-from src.repositories.NeuralModelRepository import NeuralModelRepository
-from src.repositories.db_models import Bounds
+from cluster.Executor import Executor
+from cluster.Job import Job
+from optimisation.OptimisationJob import OptimisationJob
+from repositories.NeuralModelRepository import NeuralModelRepository
+from repositories.db_models import Bounds
 
 
 class OptimisationExecutor(Executor):
@@ -17,10 +17,10 @@ class OptimisationExecutor(Executor):
         self._neural_repo.get_all()
         bounds = Bounds(0.2)
         id_list = self._neural_repo.get_all_id(non_optimised=True)
-        return [OptimisationJob(self._neural_repo, model_id, bounds) for model_id in id_list]
+        return [OptimisationJob(model_id, bounds) for model_id in id_list]
 
 
 if __name__ == '__main__':
     repo = NeuralModelRepository(uri="mongodb://localhost:27017")
     executor = OptimisationExecutor(repo)
-    executor.run_all_jobs()
+    executor.run_all_jobs(use_cluster=False, test_run=True)

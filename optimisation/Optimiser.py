@@ -11,11 +11,11 @@ import torch.onnx
 from omlt import OmltBlock  # Ignoring dependency resolution
 from omlt.neuralnet import FullSpaceNNFormulation, NetworkDefinition
 
-from src.data import functions
-from src.models.FNN import FNN
+from data import functions
+from models.FNN import FNN
 # likely from an API design error, omlt.io requires the tensorflow module even if its not being used
-from src.models.LoadableModule import LoadableModule
-from src.repositories.db_models import NeuralModel, Bounds
+from models.LoadableModule import LoadableModule
+from repositories.db_models import NeuralModel, Bounds
 
 
 class Optimiser:
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     input_bounds: Bounds = Bounds(0.2)
     print(input_bounds)
     net = FNN(10, 2, "ReLU")
-    optimiser = Optimiser.load_from_path("../../resources/trained/test/sum_squares.pt", input_bounds, lambda: net)
+    optimiser = Optimiser.load_from_path("../resources/trained/test/sum_squares.pt", input_bounds, lambda: net)
     values = optimiser.solve()
     print(values)
 

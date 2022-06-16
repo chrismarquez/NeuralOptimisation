@@ -7,11 +7,11 @@ import numpy as np
 import torch
 from sklearn.base import BaseEstimator, RegressorMixin
 
-from src.models.FNN import FNN
-from src.models.Regressor import Regressor
-from src.models.Trainer import Trainer
-from src.repositories.NeuralModelRepository import NeuralModelRepository
-from src.repositories.db_models import NeuralConfig, NeuralProperties, NeuralModel
+from models.FNN import FNN
+from models.Regressor import Regressor
+from models.Trainer import Trainer
+from repositories.NeuralModelRepository import NeuralModelRepository
+from repositories.db_models import NeuralConfig, NeuralProperties, NeuralModel
 
 LayerSize = int
 NetworkDepth = int
@@ -45,7 +45,7 @@ class Estimator(BaseEstimator, RegressorMixin):
             params_class = round(trainable_params / 10_000.0) * 10
             self.trainer = Trainer(self.net, lr=learning_rate, batch_size=batch_size)
             details = f"Size [{network_size}] Depth [{depth}] Params [{trainable_params}]  Class[{params_class} k]  Activation [{activation_fn}] "
-            self.trainer.train(x_train, y_train, self.epochs,details=details)
+            self.trainer.train(x_train, y_train, self.epochs, details=details)
             self.regressor = Regressor(self.net)
         else:
             self.should_save = False

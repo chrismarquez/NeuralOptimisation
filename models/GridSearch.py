@@ -1,6 +1,6 @@
 from typing import Sequence, Any, Dict, List
 
-from src.repositories.db_models import NeuralConfig
+from repositories.db_models import NeuralConfig
 
 
 class GridSearch:
