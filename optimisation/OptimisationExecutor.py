@@ -17,10 +17,10 @@ class OptimisationExecutor(Executor):
         self._neural_repo.get_all()
         bounds = Bounds(0.2)
         id_list = self._neural_repo.get_all_id(non_optimised=True)
-        return [OptimisationJob(self._neural_repo, model_id, bounds) for model_id in id_list]
+        return [OptimisationJob(model_id, bounds) for model_id in id_list]
 
 
 if __name__ == '__main__':
     repo = NeuralModelRepository(uri="mongodb://localhost:27017")
     executor = OptimisationExecutor(repo)
-    executor.run_all_jobs()
+    executor.run_all_jobs(use_cluster=False, test_run=True)

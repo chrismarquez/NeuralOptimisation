@@ -36,4 +36,5 @@ class Executor(ABC):
         container.init_resources()
         container.wire(modules=[__name__])
         for job in jobs:
+            print(job.encode())
             job.run(container)

@@ -52,7 +52,7 @@ class NeuralModelRepository:
         query = {"_id": ObjectId(model.id)}
         document = model.to_dict()
         del document["id"]
-        self._collection.update_one(query, document)
+        self._collection.replace_one(query, document)
 
 
 if __name__ == '__main__':
