@@ -14,7 +14,6 @@ class OptimisationExecutor(Executor):
         self._neural_repo = repository
 
     def _get_jobs(self) -> List[Job]:
-        self._neural_repo.get_all()
         bounds = Bounds(0.2)
         id_list = self._neural_repo.get_all_id(non_optimised=True)
         return [OptimisationJob(model_id, bounds) for model_id in id_list]

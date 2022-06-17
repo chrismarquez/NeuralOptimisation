@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 from collections import OrderedDict
 from typing import List, Tuple, Callable, Literal, Mapping
 
@@ -32,6 +33,9 @@ class FNN(LoadableModule):
 
         layers = OrderedDict(self._get_layers())
         self.layers = Sequential(layers)
+
+        gc.collect()
+        torch.cuda.empty_cache()
 
     def _get_layers(self) -> List[Tuple[str, nn.Module]]:
         activation_fn = FNN.activations[self.activation]

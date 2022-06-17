@@ -11,7 +11,8 @@ JobType = Literal["GPU", "CPU"]
 
 class Job(ABC):
 
-    def __init__(self):
+    def __init__(self, uuid):
+        self.uuid = uuid
         pass
 
     @abstractmethod

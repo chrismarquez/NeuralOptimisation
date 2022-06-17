@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import tempfile
 from typing import Callable, TypeVar, OrderedDict
 import torch
@@ -7,7 +8,7 @@ from torch import nn
 
 from abc import ABC, abstractmethod
 
-from torch._C._te import Tensor
+from torch import Tensor
 
 T = TypeVar('T')
 Getter = Callable[[], T]
@@ -31,6 +32,8 @@ class LoadableModule(nn.Module, ABC):
             state_dict = LoadableModule._load_state_dict(file)
             self.load_state_dict(state_dict)
             self.eval()
+            gc.collect()
+            torch.cuda.empty_cache()
             return self
 
     @staticmethod
