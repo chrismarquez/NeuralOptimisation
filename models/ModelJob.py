@@ -1,28 +1,29 @@
-from dataclasses import dataclass
 from typing import Optional
 
 from cluster.Job import Job, JobType
+from cluster.JobInit import init_job
 from data.Dataset import Dataset
 from models.Estimator import Estimator
 from models.FNN import FNN
 from models.LoadableModule import LoadableModule
 from models.Trainer import Trainer
+from repositories.NeuralModelRepository import NeuralModelRepository
+from repositories.SampleDatasetRepository import SampleDatasetRepository
 from repositories.db_models import NeuralConfig, NeuralProperties, NeuralModel
 
 from cluster.JobContainer import JobContainer
-from cluster.JobInit import init_job
 
 
-@dataclass
 class ModelJob(Job):
-    dataset_id: str
-    config: NeuralConfig
 
-    def __init__(self, uuid):
-        super().__init__(uuid)
-        self.function_name = None
-        self.sample_repo = None
-        self.neural_repo = None
+    def __init__(self, dataset_id: str, config: NeuralConfig, experiment_id: str):
+        super().__init__(experiment_id)
+        self.dataset_id = dataset_id
+        self.config = config
+
+        self.function_name: Optional[str] = None
+        self.sample_repo: Optional[SampleDatasetRepository] = None
+        self.neural_repo: Optional[NeuralModelRepository] = None
 
     def _pre_run(self, container: JobContainer) -> Dataset:
         self.neural_repo = container.neural_repository()
@@ -62,7 +63,13 @@ class ModelJob(Job):
             return None
 
     def save_model(self, trainer: Trainer, props: NeuralProperties) -> str:
-        model = NeuralModel(self.function_name, self.config, props, trainer.get_model_data())
+        model = NeuralModel(
+            self.function_name,
+            self.config,
+            props,
+            trainer.get_model_data(),
+            experiment_id=self.experiment_id
+        )
         return self.neural_repo.save(model)
 
     def as_command(self) -> str:

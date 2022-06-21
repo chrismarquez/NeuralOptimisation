@@ -3,9 +3,8 @@
 from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 
+from experiments.ExperimentExecutor import ExperimentExecutor
 from cluster.Cluster import Cluster
-from models.ModelsExecutor import ModelsExecutor
-from optimisation.OptimisationExecutor import OptimisationExecutor
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
 
@@ -33,8 +32,7 @@ class Container(containers.DeclarativeContainer):
 
     # Executors
 
-    optimisation_executor = providers.Singleton(OptimisationExecutor, repository=neural_repository)
-    models_executor = providers.Singleton(ModelsExecutor, neural_repo=neural_repository, sample_repo=sample_repository)
+    experiment_executor = providers.Singleton(ExperimentExecutor, repository=neural_repository)
 
     print("Dependencies ready.")
 

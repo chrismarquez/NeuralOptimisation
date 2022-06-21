@@ -1,56 +1,58 @@
-import inspect
-import subprocess
-import tempfile
 from time import sleep
 
-from cluster.JobStatus import JobStatus
-from cluster import Job
+import asyncio
+from typing import Awaitable, List
+
+from cluster.Job import Job
+from cluster.SlurmPool import SlurmPool
 
 
 class Cluster:
 
     def __init__(self, root_dir):
         self.root_dir = root_dir
+        self.slurm_pool = SlurmPool(root_dir, capacity=2)
         pass
 
+    # Coroutine launch method
+    async def submit(self, job: Job) -> Awaitable[str]:
+        job_type = job.get_job_type()
+        if job_type == "CPU":
+            pass
+        elif job_type == "GPU":
+            task = self._submit_slurm(job)
+            return asyncio.create_task(task)
+
+    async def _submit_slurm(self, job: Job) -> str:
+        slurm_job_id = await self.slurm_pool.submit(job)
+        while True:
+            status = await self.slurm_pool.status(slurm_job_id)
+            if status.job_state == "COMPLETE":
+                break
+            await asyncio.sleep(3)
+        lines = self.slurm_pool.get_job_output(slurm_job_id)
+        return Cluster.find_model_id(lines)
+
     @staticmethod
-    def _parse_job_id(result: str) -> int:
-        raw_job_id = result.rstrip("\\n").split("Submitted batch job ")[-1]
-        return int(raw_job_id)
-
-    def submit(self, job: Job) -> int:
-        cmd = inspect.cleandoc(f"""
-            #!/bin/bash
-            source {self.root_dir}/venv/bin/activate
-            APP_ENV=PROD {job.as_command()}
-        """)
-        with tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w") as file:
-            file.write(cmd)
-            script = file.name
-            print(script)
-        sbatch = f"sbatch {script}"
-        result = subprocess.run(sbatch, shell=True, capture_output=True)
-        output = result.stdout.decode("utf-8")
-        return Cluster._parse_job_id(output)
-
-    def status(self, job_id: int) -> JobStatus:
-        cmd = f"scontrol show job <job_id>".replace("<job_id>", str(job_id))
-        result = subprocess.run(cmd, shell=True, capture_output=True)
-        output = result.stdout.decode("utf-8")
-        return JobStatus.from_log(output)
+    def find_model_id(lines: List[str]) -> str:
+        return lines[-1].split("NEURAL_MODEL_ID:")[-1]
 
 
 if __name__ == '__main__':
-    import os
-    from repositories.SampleDatasetRepository import SampleDatasetRepository
-    from models.ModelsExecutor import ModelsExecutor
-    ROOT_DIR = os.path.dirname(os.path.abspath(__file__)).split("/cluster")[0]
-    cluster = Cluster(ROOT_DIR)
-    sample = SampleDatasetRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
-    executor = ModelsExecutor(sample)
-    job = executor._get_jobs()[0]
-    job_id = cluster.submit(job)
-    print(job_id)
-    sleep(2)
-    status = cluster.status(job_id)
-    print(status)
+
+    async def main():
+        import os
+        from experiments.ExperimentExecutor import ExperimentExecutor
+        from repositories.SampleDatasetRepository import SampleDatasetRepository
+        ROOT_DIR = os.path.dirname(os.path.abspath(__file__)).split("/cluster")[0]
+        cluster = Cluster(ROOT_DIR)
+        sample = SampleDatasetRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
+        executor = ExperimentExecutor(cluster, sample)
+        job = executor._get_initial_jobs()[0]
+        job_id = await cluster.submit(job)
+        print(job_id)
+        sleep(2)
+        # status = cluster.slurm_pool.status(job_id)
+        # print(status)
+
+    asyncio.run(main())
