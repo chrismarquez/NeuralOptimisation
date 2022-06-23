@@ -1,14 +1,21 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional
+
+
+class JobState(Enum):
+    COMPLETED = "COMPLETED"
+    RUNNING = "COMPLETED"
+    FAILED = "FAILED"
 
 
 @dataclass
 class JobStatus:
     job_id: str
     user_id: str
-    job_state: str
+    job_state: JobState
     submit_time: str
     run_time: str
     std_out: str
@@ -33,7 +40,7 @@ class JobStatus:
         return JobStatus(
             job_id=attributes["JobId"],
             user_id=attributes["UserId"],
-            job_state=attributes['JobState'],
+            job_state=JobState[attributes['JobState']],
             submit_time=attributes["SubmitTime"],
             run_time=attributes["RunTime"],
             std_out=attributes["StdOut"],

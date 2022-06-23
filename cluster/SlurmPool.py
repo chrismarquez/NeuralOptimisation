@@ -6,7 +6,7 @@ from asyncio import Future
 from typing import List, Awaitable
 
 from cluster.Job import Job, JobType
-from cluster.JobStatus import JobStatus
+from cluster.JobStatus import JobStatus, JobState
 from cluster.WorkerPool import WorkerPool
 
 
@@ -33,7 +33,7 @@ class SlurmPool(WorkerPool):
         while True:
             status = await self.status(slurm_job_id)
             print(f"Job Status {slurm_job_id}: {status}")
-            if status.job_state == "COMPLETE":
+            if status.job_state == JobState.COMPLETED:
                 break
             await asyncio.sleep(3)
         lines = self.get_job_output(slurm_job_id)
@@ -70,7 +70,7 @@ class SlurmPool(WorkerPool):
         result = subprocess.run(cmd, shell=True, capture_output=True)
         output = result.stdout.decode("utf-8")
         status = JobStatus.from_log(output)
-        if status.job_state == "COMPLETE":
+        if status.job_state == JobState.COMPLETED:
             await self._release_slot()
         return status
 
