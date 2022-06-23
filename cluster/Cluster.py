@@ -49,7 +49,11 @@ class Cluster:
             (future, job) = await queue.get()
             try:
                 pool_future = await pool.submit(job)
-                result = await pool_future
-                future.set_result(result)
+                task = self._on_complete(future, pool_future)
+                asyncio.create_task(task)
             except RuntimeError as e:
                 future.set_exception(e)
+
+    async def _on_complete(self, future: Future, pool_future: Awaitable):
+        result = await pool_future
+        future.set_result(result)
