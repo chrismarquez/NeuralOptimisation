@@ -1,6 +1,8 @@
 from abc import ABC
 from asyncio import Queue
 
+from cluster.Job import Job, JobType
+
 
 class WorkerPool(ABC):
 
@@ -14,3 +16,9 @@ class WorkerPool(ABC):
     async def _release_slot(self):
         await self._slots_queue.get()
         self._slots_queue.task_done()
+
+    async def submit(self, job: Job) -> str:
+        pass
+
+    def job_type(self) -> JobType:
+        pass

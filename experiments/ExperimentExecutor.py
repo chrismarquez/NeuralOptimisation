@@ -56,9 +56,11 @@ class ExperimentExecutor:
     ):
         jobs = self._get_initial_jobs(experiment)
         if test_run:
-            jobs = [jobs[0]]
+            jobs = jobs[0:9]
         if use_cluster:
+            self._cluster.start()
             await self._pipeline.execute(jobs)
+            self._cluster.stop()
         else:
             ExperimentExecutor._run_locally(jobs)
 

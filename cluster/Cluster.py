@@ -1,58 +1,54 @@
+from asyncio import Queue, Future, Task
 from time import sleep
 
 import asyncio
-from typing import Awaitable, List
+from typing import Awaitable, List, Mapping, Tuple
 
-from cluster.Job import Job
+from cluster.Job import Job, JobType
 from cluster.SlurmPool import SlurmPool
+from cluster.WorkerPool import WorkerPool
 
 
 class Cluster:
 
     def __init__(self, root_dir):
         self.root_dir = root_dir
-        self.slurm_pool = SlurmPool(root_dir, capacity=2)
-        pass
+
+        self.pools: List[WorkerPool] = [
+            SlurmPool(root_dir, capacity=2)
+        ]
+
+        self.consumers: List[Task] = []
+
+        self.type_queues: Mapping[JobType, Queue[Tuple[Future[str], Job]]] = {
+            "CPU": Queue(),
+            "GPU": Queue()
+        }
 
     # Coroutine launch method
     async def submit(self, job: Job) -> Awaitable[str]:
         job_type = job.get_job_type()
-        if job_type == "CPU":
-            pass
-        elif job_type == "GPU":
-            task = self._submit_slurm(job)
-            return asyncio.create_task(task)
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+        await self.type_queues[job_type].put((future, job))
+        return future
 
-    async def _submit_slurm(self, job: Job) -> str:
-        slurm_job_id = await self.slurm_pool.submit(job)
+    def start(self):
+        for pool in self.pools:
+            consumer = asyncio.create_task(self._consume(pool))
+            self.consumers.append(consumer)
+
+    def stop(self):
+        for consumer in self.consumers:
+            consumer.cancel()
+
+    async def _consume(self, pool: WorkerPool):
+        job_type = pool.job_type()
+        queue = self.type_queues[job_type]
         while True:
-            status = await self.slurm_pool.status(slurm_job_id)
-            if status.job_state == "COMPLETE":
-                break
-            await asyncio.sleep(3)
-        lines = self.slurm_pool.get_job_output(slurm_job_id)
-        return Cluster.find_model_id(lines)
-
-    @staticmethod
-    def find_model_id(lines: List[str]) -> str:
-        return lines[-1].split("NEURAL_MODEL_ID:")[-1]
-
-
-if __name__ == '__main__':
-
-    async def main():
-        import os
-        from experiments.ExperimentExecutor import ExperimentExecutor
-        from repositories.SampleDatasetRepository import SampleDatasetRepository
-        ROOT_DIR = os.path.dirname(os.path.abspath(__file__)).split("/cluster")[0]
-        cluster = Cluster(ROOT_DIR)
-        sample = SampleDatasetRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
-        executor = ExperimentExecutor(cluster, sample)
-        job = executor._get_initial_jobs()[0]
-        job_id = await cluster.submit(job)
-        print(job_id)
-        sleep(2)
-        # status = cluster.slurm_pool.status(job_id)
-        # print(status)
-
-    asyncio.run(main())
+            (future, job) = await queue.get()
+            try:
+                result = await pool.submit(job)
+                future.set_result(result)
+            except RuntimeError as e:
+                future.set_exception(e)

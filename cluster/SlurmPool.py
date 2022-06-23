@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 from typing import List
 
-from cluster.Job import Job
+from cluster.Job import Job, JobType
 from cluster.JobStatus import JobStatus
 from cluster.WorkerPool import WorkerPool
 
@@ -20,7 +20,20 @@ class SlurmPool(WorkerPool):
         raw_job_id = result.rstrip("\\n").split("Submitted batch job ")[-1]
         return int(raw_job_id)
 
-    async def submit(self, job: Job) -> int:
+    async def submit(self, job: Job) -> str:
+        slurm_job_id = await self._submit(job)
+        while True:
+            status = await self.status(slurm_job_id)
+            if status.job_state == "COMPLETE":
+                break
+            await asyncio.sleep(3)
+        lines = self.get_job_output(slurm_job_id)
+        return SlurmPool.find_model_id(lines)
+
+    def job_type(self) -> JobType:
+        return "GPU"
+
+    async def _submit(self, job: Job) -> int:
         await self._request_slot()
         cmd = inspect.cleandoc(
             f"""
@@ -34,7 +47,6 @@ class SlurmPool(WorkerPool):
             script = file.name
             print(script)
         sbatch = f"sbatch {script}"
-        await asyncio.sleep(15)
         try:
             result = subprocess.run(sbatch, shell=True, capture_output=True)
             output = result.stdout.decode("utf-8")
@@ -56,5 +68,9 @@ class SlurmPool(WorkerPool):
         file = f"{self.root_dir}/slurm20-{job_id}.out"
         with open(file) as f:
             return f.readlines()
+
+    @staticmethod
+    def find_model_id(lines: List[str]) -> str:
+        return lines[-1].split("NEURAL_MODEL_ID:")[-1]
 
 

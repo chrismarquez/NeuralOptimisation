@@ -1,8 +1,8 @@
 
-
 from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 
+from experiments.Experiment import Experiment
 from experiments.ExperimentExecutor import ExperimentExecutor
 from cluster.Cluster import Cluster
 from repositories.NeuralModelRepository import NeuralModelRepository
@@ -39,14 +39,9 @@ class Container(containers.DeclarativeContainer):
 
 @inject
 def main(container: Container = Provide[Container]):
-    #optimisation_executor = container.optimisation_executor()
-    #optimisation_executor.run_all_jobs()
-    #print("Hello there")
-    cluster = container.cluster()
-    config = cluster.get_job_config()
-    print(config)
-    cluster.exec(config)
-
+    executor = container.experiment_executor()
+    experiment = Experiment("test-1")
+    executor.run_experiment(experiment, test_run=True)
 
 if __name__ == '__main__':
     print("Loading Container...")
