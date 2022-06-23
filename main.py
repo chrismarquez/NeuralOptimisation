@@ -1,3 +1,4 @@
+import asyncio
 
 from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
@@ -32,16 +33,17 @@ class Container(containers.DeclarativeContainer):
 
     # Executors
 
-    experiment_executor = providers.Singleton(ExperimentExecutor, repository=neural_repository)
+    experiment_executor = providers.Singleton(ExperimentExecutor, cluster=cluster, sample_repo=sample_repository)
 
     print("Dependencies ready.")
 
 
 @inject
-def main(container: Container = Provide[Container]):
+async def main(container: Container = Provide[Container]):
     executor = container.experiment_executor()
     experiment = Experiment("test-1")
-    executor.run_experiment(experiment, test_run=True)
+    await executor.run_experiment(experiment, test_run=True)
+
 
 if __name__ == '__main__':
     print("Loading Container...")
@@ -49,4 +51,4 @@ if __name__ == '__main__':
     container.init_resources()
     container.wire(modules=[__name__])
     print("Container ready.")
-    main()
+    asyncio.run(main())
