@@ -7,7 +7,7 @@ from typing import Optional
 
 class JobState(Enum):
     COMPLETED = "COMPLETED"
-    RUNNING = "COMPLETED"
+    PENDING = "PENDING"
     FAILED = "FAILED"
 
 
