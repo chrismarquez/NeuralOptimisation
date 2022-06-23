@@ -48,7 +48,8 @@ class Cluster:
         while True:
             (future, job) = await queue.get()
             try:
-                result = await pool.submit(job)
+                pool_future = await pool.submit(job)
+                result = await pool_future
                 future.set_result(result)
             except RuntimeError as e:
                 future.set_exception(e)

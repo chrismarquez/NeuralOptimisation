@@ -1,5 +1,6 @@
 from abc import ABC
 from asyncio import Queue
+from typing import Awaitable
 
 from cluster.Job import Job, JobType
 
@@ -17,7 +18,7 @@ class WorkerPool(ABC):
         await self._slots_queue.get()
         self._slots_queue.task_done()
 
-    async def submit(self, job: Job) -> str:
+    async def submit(self, job: Job) -> Awaitable[str]:
         pass
 
     def job_type(self) -> JobType:

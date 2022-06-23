@@ -56,9 +56,12 @@ class Segment:
         while True:
             job = await self.job_queue.get()
             task = await self.submit(job)
-            next_job = await self._pipe_and_mark(task)
-            if self.next is not None and next_job is not None:
-                await self.next.enqueue(next_job)
+            asyncio.create_task(self._post_process(task))
+
+    async def _post_process(self, task: Task):
+        next_job = await self._pipe_and_mark(task)
+        if self.next is not None and next_job is not None:
+            await self.next.enqueue(next_job)
 
 
 class Pipeline:

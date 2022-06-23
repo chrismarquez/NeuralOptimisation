@@ -2,7 +2,8 @@ import asyncio
 import inspect
 import subprocess
 import tempfile
-from typing import List
+from asyncio import Future
+from typing import List, Awaitable
 
 from cluster.Job import Job, JobType
 from cluster.JobStatus import JobStatus
@@ -20,15 +21,23 @@ class SlurmPool(WorkerPool):
         raw_job_id = result.rstrip("\\n").split("Submitted batch job ")[-1]
         return int(raw_job_id)
 
-    async def submit(self, job: Job) -> str:
+    async def submit(self, job: Job) -> Awaitable[str]:
         slurm_job_id = await self._submit(job)
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+        task = self._post_process(future, slurm_job_id)
+        asyncio.create_task(task)
+        return future
+
+    async def _post_process(self, future: Future[str], slurm_job_id: int):
         while True:
             status = await self.status(slurm_job_id)
             if status.job_state == "COMPLETE":
                 break
             await asyncio.sleep(3)
         lines = self.get_job_output(slurm_job_id)
-        return SlurmPool.find_model_id(lines)
+        model_id = SlurmPool.find_model_id(lines)
+        future.set_result(model_id)
 
     def job_type(self) -> JobType:
         return "GPU"
