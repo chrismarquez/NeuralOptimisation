@@ -100,5 +100,5 @@ class Pipeline:
             await asyncio.sleep(1)
             for segment in self.segments:
                 completed = segment.job_completed
-                #print(f"Segment {segment.name} progress: Completed {completed} / {total} jobs \t", end="")
+                print(f"Segment {segment.name} progress: Completed {completed} / {total} jobs \t", end="")
             print()
