@@ -32,6 +32,7 @@ class SlurmPool(WorkerPool):
     async def _post_process(self, future: Future[str], slurm_job_id: int):
         while True:
             status = await self.status(slurm_job_id)
+            print(f"Job Status {slurm_job_id}: {status}")
             if status.job_state == "COMPLETE":
                 break
             await asyncio.sleep(3)
