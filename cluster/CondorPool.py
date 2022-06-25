@@ -44,7 +44,7 @@ class CondorPool(WorkerPool):
 
     def test(self):
         stdin, stdout, stderr = self.ssh_client.exec_command("ls /usr/local/condor")
-        print(str(stdin.read()))
+        print(str(stdout.read()))
 
     def job_type(self) -> JobType:
         return self.config.job_type
