@@ -12,8 +12,7 @@ from cluster.WorkerPool import WorkerPool
 class SlurmPool(WorkerPool):
 
     def __init__(self, root_dir: str, capacity: int):
-        super().__init__(capacity)
-        self.root_dir = root_dir
+        super().__init__(capacity, root_dir)
 
     @staticmethod
     def _parse_job_id(result: str) -> int:
@@ -44,14 +43,7 @@ class SlurmPool(WorkerPool):
 
     async def _submit(self, job: Job) -> int:
         await self._request_slot()
-        cmd = inspect.cleandoc(
-            f"""
-                #!/bin/bash
-                source {self.root_dir}/venv/bin/activate
-                APP_ENV=PROD {job.as_command()}
-            """
-        )
-        script = WorkerPool._write_script_file(cmd)
+        script = self._to_runnable_script(job)
         sbatch = f"sbatch {script}"
         try:
             result = subprocess.run(sbatch, shell=True, capture_output=True)

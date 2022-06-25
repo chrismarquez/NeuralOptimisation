@@ -1,3 +1,4 @@
+import inspect
 import tempfile
 from abc import ABC, abstractmethod
 from asyncio import Queue
@@ -8,7 +9,8 @@ from cluster.Job import Job, JobType
 
 class WorkerPool(ABC):
 
-    def __init__(self, capacity: int):
+    def __init__(self, capacity: int, root_dir: str):
+        self.root_dir = root_dir
         self.capacity = capacity
         self._slots_queue: Queue[int] = Queue(maxsize=capacity)
 
@@ -19,9 +21,19 @@ class WorkerPool(ABC):
         await self._slots_queue.get()
         self._slots_queue.task_done()
 
-    @staticmethod
-    def _write_script_file(content: str):
-        with tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w") as file:
+    def _to_runnable_script(self, job: Job):
+        cmd = inspect.cleandoc(
+            f"""
+                #!/bin/bash
+                source {self.root_dir}/venv/bin/activate
+                APP_ENV=PROD {job.as_command()}
+            """
+        )
+        return self._write_script_file(cmd)
+
+    def _write_script_file(self, content: str, suffix=".sh"):
+        path = f"{self.root_dir}/temp"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False, mode="w", dir=path) as file:
             file.write(content)
             script = file.name
             print(script)
