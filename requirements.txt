@@ -53,3 +53,4 @@ onnx~=1.11.0
 dependency-injector==4.39.1
 pymongo~=4.1.1
 dacite~=1.6.0
+paramiko==2.11.0

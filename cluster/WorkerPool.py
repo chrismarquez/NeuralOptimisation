@@ -1,4 +1,5 @@
-from abc import ABC
+import tempfile
+from abc import ABC, abstractmethod
 from asyncio import Queue
 from typing import Awaitable
 
@@ -18,8 +19,18 @@ class WorkerPool(ABC):
         await self._slots_queue.get()
         self._slots_queue.task_done()
 
+    @staticmethod
+    def _write_script_file(content: str):
+        with tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w") as file:
+            file.write(content)
+            script = file.name
+            print(script)
+            return script
+
+    @abstractmethod
     async def submit(self, job: Job) -> Awaitable[str]:
         pass
 
+    @abstractmethod
     def job_type(self) -> JobType:
         pass

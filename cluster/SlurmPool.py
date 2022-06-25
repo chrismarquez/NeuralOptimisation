@@ -1,7 +1,6 @@
 import asyncio
 import inspect
 import subprocess
-import tempfile
 from asyncio import Future
 from typing import List, Awaitable
 
@@ -12,7 +11,7 @@ from cluster.WorkerPool import WorkerPool
 
 class SlurmPool(WorkerPool):
 
-    def __init__(self, root_dir, capacity: int):
+    def __init__(self, root_dir: str, capacity: int):
         super().__init__(capacity)
         self.root_dir = root_dir
 
@@ -52,10 +51,7 @@ class SlurmPool(WorkerPool):
                 APP_ENV=PROD {job.as_command()}
             """
         )
-        with tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w") as file:
-            file.write(cmd)
-            script = file.name
-            print(script)
+        script = WorkerPool._write_script_file(cmd)
         sbatch = f"sbatch {script}"
         try:
             result = subprocess.run(sbatch, shell=True, capture_output=True)
