@@ -1,4 +1,3 @@
-import asyncio
 import inspect
 from dataclasses import dataclass
 from typing import List, Awaitable
@@ -24,7 +23,7 @@ class CondorPool(WorkerPool):
 
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
-        self.ssh_client.connect(self.condor_server)
+        self.ssh_client.connect(self.condor_server, username="csm21")
 
 
     async def submit(self, job: Job) -> Awaitable[str]:
