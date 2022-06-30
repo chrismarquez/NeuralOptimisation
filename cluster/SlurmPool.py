@@ -1,23 +1,22 @@
 import asyncio
-import inspect
 import subprocess
 from asyncio import Future
 from typing import List, Awaitable
 
 from cluster.Job import Job, JobType
-from cluster.JobStatus import JobStatus, JobState
+from cluster.SlurmJobStatus import SlurmJobStatus, SlurmJobState
 from cluster.WorkerPool import WorkerPool
 
 
 class SlurmPool(WorkerPool):
 
-    def __init__(self, root_dir: str, capacity: int):
-        super().__init__(capacity, root_dir)
-
     @staticmethod
     def _parse_job_id(result: str) -> int:
         raw_job_id = result.rstrip("\\n").split("Submitted batch job ")[-1]
         return int(raw_job_id)
+
+    def __init__(self, root_dir: str, capacity: int):
+        super().__init__(capacity, root_dir)
 
     async def submit(self, job: Job) -> Awaitable[str]:
         slurm_job_id = await self._submit(job)
@@ -31,7 +30,7 @@ class SlurmPool(WorkerPool):
         while True:
             status = await self.status(slurm_job_id)
             print(f"Job Status {slurm_job_id}: {status}")
-            if status.job_state == JobState.COMPLETED:
+            if status.job_state == SlurmJobState.COMPLETED:
                 break
             await asyncio.sleep(3)
         lines = self.get_job_output(slurm_job_id)
@@ -53,12 +52,12 @@ class SlurmPool(WorkerPool):
             await self._release_slot()
             raise RuntimeError(f"Task creation error for job {job.uuid}")
 
-    async def status(self, job_id: int) -> JobStatus:
+    async def status(self, job_id: int) -> SlurmJobStatus:
         cmd = f"scontrol show job <job_id>".replace("<job_id>", str(job_id))
         result = subprocess.run(cmd, shell=True, capture_output=True)
         output = result.stdout.decode("utf-8")
-        status = JobStatus.from_log(output)
-        if status.job_state == JobState.COMPLETED:
+        status = SlurmJobStatus.from_log(output)
+        if status.job_state == SlurmJobState.COMPLETED:
             await self._release_slot()
         return status
 
