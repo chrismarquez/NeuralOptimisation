@@ -112,7 +112,7 @@ if __name__ == '__main__':
     input_bounds: Bounds = Bounds(0.2)
     print(input_bounds)
     repo = NeuralModelRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
-    model = repo.get("6272e5822dcdeb8416d4dd6d")
+    model = repo.get("62b4969f79d0fbcab4b0ff0b")
     optimiser = Optimiser.load_from_model(model, input_bounds)
     values = optimiser.solve()
     print(values)
