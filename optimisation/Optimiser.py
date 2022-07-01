@@ -111,7 +111,7 @@ if __name__ == '__main__':
     [x_max] = [x_max for fn, x_max in functions.pool.items() if fn == functions.sum_squares]
     input_bounds: Bounds = Bounds(0.2)
     print(input_bounds)
-    repo = NeuralModelRepository("mongodb://localhost:27017/")
+    repo = NeuralModelRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
     model = repo.get("6272e5822dcdeb8416d4dd6d")
     optimiser = Optimiser.load_from_model(model, input_bounds)
     values = optimiser.solve()
