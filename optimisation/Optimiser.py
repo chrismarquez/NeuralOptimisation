@@ -107,11 +107,13 @@ class Optimiser:
 
 
 if __name__ == '__main__':
+    from repositories.NeuralModelRepository import NeuralModelRepository
     [x_max] = [x_max for fn, x_max in functions.pool.items() if fn == functions.sum_squares]
     input_bounds: Bounds = Bounds(0.2)
     print(input_bounds)
-    net = FNN(10, 2, "ReLU")
-    optimiser = Optimiser.load_from_path("../resources/trained/test/sum_squares.pt", input_bounds, lambda: net)
+    repo = NeuralModelRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
+    model = repo.get("62b4969f79d0fbcab4b0ff0b")
+    optimiser = Optimiser.load_from_model(model, input_bounds)
     values = optimiser.solve()
     print(values)
 

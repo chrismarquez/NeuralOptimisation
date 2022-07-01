@@ -1,33 +1,76 @@
-from dataclasses import dataclass
+from typing import Optional
 
 from cluster.Job import Job, JobType
+from cluster.JobInit import init_job
+from data.Dataset import Dataset
 from models.Estimator import Estimator
-from repositories.db_models import NeuralConfig
+from models.FNN import FNN
+from models.LoadableModule import LoadableModule
+from models.Trainer import Trainer
+from repositories.NeuralModelRepository import NeuralModelRepository
+from repositories.SampleDatasetRepository import SampleDatasetRepository
+from repositories.db_models import NeuralConfig, NeuralProperties, NeuralModel
 
 from cluster.JobContainer import JobContainer
-from cluster.JobInit import init_job
 
 
-@dataclass
 class ModelJob(Job):
-    dataset_id: str
-    config: NeuralConfig
 
-    def run(self, container: JobContainer):
-        neural_repo = container.neural_repository()
-        sample_repo = container.sample_repository()
+    def __init__(self, dataset_id: str, config: NeuralConfig, experiment_id: str):
+        super().__init__(experiment_id)
+        self.dataset_id = dataset_id
+        self.config = config
+
+        self.function_name: Optional[str] = None
+        self.sample_repo: Optional[SampleDatasetRepository] = None
+        self.neural_repo: Optional[NeuralModelRepository] = None
+
+    def _pre_run(self, container: JobContainer) -> Dataset:
+        self.neural_repo = container.neural_repository()
+        self.sample_repo = container.sample_repository()
 
         # np.exp(numpy.linspace(np.log(10E-4), np.log(10E-6), 3))
-        sample_dataset = sample_repo.get(self.dataset_id)
-        function_name = sample_dataset.function
-        dataset = sample_dataset.to_dataset()
+        sample_dataset = self.sample_repo.get(self.dataset_id)
+        self.function_name = sample_dataset.function
+        return sample_dataset.to_dataset()
 
-        x_train, y_train = dataset.train
-        x_test, y_test = dataset.test
+    def run(self, container: JobContainer):
+        dataset = self._pre_run(container)
+        model_result = self.search_existing()
+        if model_result is None:
+            x_train, y_train = dataset.train
+            x_test, y_test = dataset.test
+            estimator = Estimator(name=self.function_name, config=self.config, epochs=5)
+            trainer = estimator.fit(x_train, y_train)
+            neural_props = estimator.score(x_test, y_test)
+            neural_model_id = self.save_model(trainer, neural_props)
+        else:
+            neural_model_id = model_result.id
+        print(f"NEURAL_MODEL_ID:{neural_model_id}")
 
-        estimator = Estimator(neural_repo, name=function_name, config=self.config, epochs=5, should_save=True)
-        estimator.fit(x_train, y_train)
-        estimator.score(x_test, y_test)
+    def load(self) -> Optional[LoadableModule]:
+        existing_models = self.neural_repo.get_by_config(self.function_name, self.config)
+        model = existing_models[0]
+        return FNN(
+            self.config.network_size, self.config.depth, self.config.activation_fn
+        ).load_bytes(model.model_data)
+
+    def search_existing(self) -> Optional[NeuralModel]:
+        existing_models = self.neural_repo.get_by_config(self.function_name, self.config)
+        if len(existing_models) != 0:
+            return existing_models[0]
+        else:
+            return None
+
+    def save_model(self, trainer: Trainer, props: NeuralProperties) -> str:
+        model = NeuralModel(
+            self.function_name,
+            self.config,
+            props,
+            trainer.get_model_data(),
+            experiment_id=self.experiment_id
+        )
+        return self.neural_repo.save(model)
 
     def as_command(self) -> str:
         return f"python3 -m models.ModelJob --job {self.encode()}"

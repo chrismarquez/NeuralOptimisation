@@ -43,10 +43,11 @@ class NeuralModelRepository:
         documents = self._collection.find(query)
         return [NeuralModel.from_dict(document) for document in documents]
 
-    def save(self, model: NeuralModel) -> None:
+    def save(self, model: NeuralModel) -> str:
         document = model.to_dict()
         del document["id"]
-        self._collection.insert_one(document)
+        result = self._collection.insert_one(document)
+        return str(result.inserted_id)
 
     def update(self, model: NeuralModel) -> None:
         query = {"_id": ObjectId(model.id)}

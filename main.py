@@ -1,11 +1,11 @@
-
+import asyncio
 
 from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 
+from experiments.Experiment import Experiment
+from experiments.ExperimentExecutor import ExperimentExecutor
 from cluster.Cluster import Cluster
-from models.ModelsExecutor import ModelsExecutor
-from optimisation.OptimisationExecutor import OptimisationExecutor
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
 
@@ -33,21 +33,16 @@ class Container(containers.DeclarativeContainer):
 
     # Executors
 
-    optimisation_executor = providers.Singleton(OptimisationExecutor, repository=neural_repository)
-    models_executor = providers.Singleton(ModelsExecutor, neural_repo=neural_repository, sample_repo=sample_repository)
+    experiment_executor = providers.Singleton(ExperimentExecutor, cluster=cluster, sample_repo=sample_repository)
 
     print("Dependencies ready.")
 
 
 @inject
-def main(container: Container = Provide[Container]):
-    #optimisation_executor = container.optimisation_executor()
-    #optimisation_executor.run_all_jobs()
-    #print("Hello there")
-    cluster = container.cluster()
-    config = cluster.get_job_config()
-    print(config)
-    cluster.exec(config)
+async def main(container: Container = Provide[Container]):
+    executor = container.experiment_executor()
+    experiment = Experiment("test-1")
+    await executor.run_experiment(experiment, test_run=True)
 
 
 if __name__ == '__main__':
@@ -56,4 +51,4 @@ if __name__ == '__main__':
     container.init_resources()
     container.wire(modules=[__name__])
     print("Container ready.")
-    main()
+    asyncio.run(main())

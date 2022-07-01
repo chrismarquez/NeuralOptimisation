@@ -5,13 +5,18 @@ import pickle
 from abc import ABC, abstractmethod
 from typing import Literal
 
+import uuid
+
 from cluster.JobContainer import JobContainer
 
 JobType = Literal["GPU", "CPU"]
 
+
 class Job(ABC):
 
-    def __init__(self):
+    def __init__(self, experiment_id):
+        self.uuid: str = str(uuid.uuid4())
+        self.experiment_id = experiment_id
         pass
 
     @abstractmethod

@@ -1,56 +1,59 @@
-import inspect
-import subprocess
-import tempfile
+from asyncio import Queue, Future, Task
 from time import sleep
 
-from cluster.JobStatus import JobStatus
-from cluster import Job
+import asyncio
+from typing import Awaitable, List, Mapping, Tuple
+
+from cluster.Job import Job, JobType
+from cluster.SlurmPool import SlurmPool
+from cluster.WorkerPool import WorkerPool
 
 
 class Cluster:
 
     def __init__(self, root_dir):
         self.root_dir = root_dir
-        pass
 
-    @staticmethod
-    def _parse_job_id(result: str) -> int:
-        raw_job_id = result.rstrip("\\n").split("Submitted batch job ")[-1]
-        return int(raw_job_id)
+        self.pools: List[WorkerPool] = [
+            SlurmPool(root_dir, capacity=2)
+        ]
 
-    def submit(self, job: Job) -> int:
-        cmd = inspect.cleandoc(f"""
-            #!/bin/bash
-            source {self.root_dir}/venv/bin/activate
-            APP_ENV=PROD {job.as_command()}
-        """)
-        with tempfile.NamedTemporaryFile(suffix=".sh", delete=False, mode="w") as file:
-            file.write(cmd)
-            script = file.name
-            print(script)
-        sbatch = f"sbatch {script}"
-        result = subprocess.run(sbatch, shell=True, capture_output=True)
-        output = result.stdout.decode("utf-8")
-        return Cluster._parse_job_id(output)
+        self.consumers: List[Task] = []
 
-    def status(self, job_id: int) -> JobStatus:
-        cmd = f"scontrol show job <job_id>".replace("<job_id>", str(job_id))
-        result = subprocess.run(cmd, shell=True, capture_output=True)
-        output = result.stdout.decode("utf-8")
-        return JobStatus.from_log(output)
+        self.type_queues: Mapping[JobType, Queue[Tuple[Future[str], Job]]] = {
+            "CPU": Queue(),
+            "GPU": Queue()
+        }
 
+    # Coroutine launch method
+    async def submit(self, job: Job) -> Awaitable[str]:
+        job_type = job.get_job_type()
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+        await self.type_queues[job_type].put((future, job))
+        return future
 
-if __name__ == '__main__':
-    import os
-    from repositories.SampleDatasetRepository import SampleDatasetRepository
-    from models.ModelsExecutor import ModelsExecutor
-    ROOT_DIR = os.path.dirname(os.path.abspath(__file__)).split("/cluster")[0]
-    cluster = Cluster(ROOT_DIR)
-    sample = SampleDatasetRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
-    executor = ModelsExecutor(sample)
-    job = executor._get_jobs()[0]
-    job_id = cluster.submit(job)
-    print(job_id)
-    sleep(2)
-    status = cluster.status(job_id)
-    print(status)
+    def start(self):
+        for pool in self.pools:
+            consumer = asyncio.create_task(self._consume(pool))
+            self.consumers.append(consumer)
+
+    def stop(self):
+        for consumer in self.consumers:
+            consumer.cancel()
+
+    async def _consume(self, pool: WorkerPool):
+        job_type = pool.job_type()
+        queue = self.type_queues[job_type]
+        while True:
+            (future, job) = await queue.get()
+            try:
+                pool_future = await pool.submit(job)
+                task = self._on_complete(future, pool_future)
+                asyncio.create_task(task)
+            except RuntimeError as e:
+                future.set_exception(e)
+
+    async def _on_complete(self, future: Future, pool_future: Awaitable):
+        result = await pool_future
+        future.set_result(result)
