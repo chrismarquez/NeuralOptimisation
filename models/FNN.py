@@ -2,34 +2,24 @@ from __future__ import annotations
 
 import gc
 from collections import OrderedDict
-from typing import List, Tuple, Callable, Literal, Mapping
+from typing import List, Tuple
 
 import torch
 from torch import nn
 from torch.nn import Sequential
 
-from models.LoadableModule import LoadableModule
-
-Activation = Literal["ReLU", "Tanh", "Sigmoid"]
-ActivationFn = Callable[[], nn.Module]
+from models.LoadableModule import LoadableModule, Activation
 
 
 class FNN(LoadableModule):
-
-    activations: Mapping[Activation, ActivationFn] = {
-        "ReLU": lambda: nn.ReLU(),
-        "Tanh": lambda: nn.Tanh(),
-        "Sigmoid": lambda: nn.Sigmoid(),
-    }
 
     def dummy_input(self) -> torch.Tensor:
         return torch.empty((1, 2))
 
     def __init__(self, nodes: int, depth: int, activation: Activation):
-        super().__init__()
+        super().__init__(activation)
         self.depth = depth  # network depth
         self.nodes = nodes  # nodes of layer 1
-        self.activation = activation
 
         layers = OrderedDict(self._get_layers())
         self.layers = Sequential(layers)
@@ -38,7 +28,7 @@ class FNN(LoadableModule):
         torch.cuda.empty_cache()
 
     def _get_layers(self) -> List[Tuple[str, nn.Module]]:
-        activation_fn = FNN.activations[self.activation]
+        activation_fn = self.get_activation()
         hidden = [int(self.nodes / (2 ** i)) for i in range(self.depth)]
         sizes = [2] + hidden
         layers = []

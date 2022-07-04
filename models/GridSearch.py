@@ -44,7 +44,7 @@ if __name__ == '__main__':
     hyper_params = {
         "learning_rate": [1E-6, 3E-7],  # Evenly spaced lr in log scale
         "batch_size": [128, 512],
-        "network_size": [2, 4, 6],
+        "network_shape": [2, 4, 6],
         "depth": [2, 4],
         "activation_fn": ["ReLU", "Sigmoid"]
     }
