@@ -32,15 +32,15 @@ class Polynomial:
 
     @staticmethod
     def _final_fc_polynomial(n: int, f: int, l: int) -> Polynomial:
-        coeff = Polynomial._final_fc_coeff(n, f, l)
+        coeff = Polynomial.final_fc_coeff(n, f, l)
         return Polynomial([2.0 ** (l - 1) * coeff ** 3, coeff])
 
     @staticmethod
-    def _final_fc_coeff(n: int, f: int, i: int) -> int:
+    def final_fc_coeff(n: int, f: int, i: int) -> int:
         if i == 0:
             return n
         else:
-            res = int(math.floor(0.5 * (Polynomial._final_fc_coeff(n, f, i - 1) - f + 1)))
+            res = int(math.floor(0.5 * (Polynomial.final_fc_coeff(n, f, i - 1) - f + 1)))
             return max(1, res)
 
     def __neg__(self):
@@ -79,9 +79,9 @@ class Polynomial:
 
 
 if __name__ == '__main__':
-    x = Polynomial.make_cnn_polynomial(n=20, f=3, l=2)
-    y = Polynomial.make_cnn_polynomial(n=20, f=5, l=2)
-    z = Polynomial.make_cnn_polynomial(n=20, f=7, l=2)
-    print(x)
-    print(y)
-    print(z)
+    f_s = [3, 5, 7]
+    for f in f_s:
+        x = Polynomial.make_cnn_polynomial(20, f, 2)
+        print(x)
+        for i in range(1, 10):
+            print((x - 10_000 * i).largest_root())

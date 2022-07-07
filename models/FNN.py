@@ -7,8 +7,9 @@ from typing import List, Tuple
 import torch
 from torch import nn
 from torch.nn import Sequential
+from torchsummary import summary
 
-from models.LoadableModule import LoadableModule, Activation
+from models.LoadableModule import LoadableModule, Activation, Layer
 
 
 class FNN(LoadableModule):
@@ -27,7 +28,7 @@ class FNN(LoadableModule):
         gc.collect()
         torch.cuda.empty_cache()
 
-    def _get_layers(self) -> List[Tuple[str, nn.Module]]:
+    def _get_layers(self) -> List[Layer]:
         activation_fn = self.get_activation()
         hidden = [int(self.nodes / (2 ** i)) for i in range(self.depth)]
         sizes = [2] + hidden
@@ -46,15 +47,13 @@ class FNN(LoadableModule):
     # [math.sqrt(2 * 10_000 * i + 15) - 4 for i in range(1, 10)]
     # [math.sqrt(32.0/21.0 * 10_000 * i - 32.0/21.0 + (64.0/21.0) ** 2) - 64.0/21.0 for i in range(1, 9)]
 
-    def count_parameters(self) -> int:
-        return sum([p.numel() for p in self.parameters() if p.requires_grad])
-
     def forward(self, input: torch.Tensor) -> torch.Tensor:
+        print(input.size())
         return self.layers(input)
 
 
 if __name__ == '__main__':
-    net = FNN(nodes=300, depth=4, activation="ReLU").cuda()
+    net = FNN(nodes=300, depth=4, activation="ReLU")
     print(net)
     print(net.count_parameters())
-    #summary(net, (128, 2))
+    summary(net, (1, 2), batch_size=128)
