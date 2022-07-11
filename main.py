@@ -41,7 +41,7 @@ class Container(containers.DeclarativeContainer):
 @inject
 async def main(container: Container = Provide[Container]):
     executor = container.experiment_executor()
-    experiment = Experiment("test-1")
+    experiment = Experiment("test-1", "Convolutional")
     await executor.run_experiment(experiment, test_run=True)
 
 

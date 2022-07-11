@@ -15,7 +15,4 @@ class Reshape(nn.Module):
         self.shape: Tuple[int, ...] = args
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        print(input.size())
-        x = input.view((input.size()[0], *self.shape))
-        print(x.size())
-        return x
+        return input.view((input.size()[0], *self.shape))

@@ -64,6 +64,7 @@ class FeedforwardNeuralConfig(DataModel):
 class ConvolutionalNeuralConfig(DataModel):
     learning_rate: float
     batch_size: int
+    start_size: int
     filters: int
     filter_size: int
     depth: int

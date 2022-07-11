@@ -1,7 +1,8 @@
 from typing import Sequence, Any, Dict, List
 
 from experiments.Polynomial import Polynomial
-from repositories.db_models import FeedforwardNeuralConfig, ConvolutionalNeuralConfig
+from experiments.Experiment import NeuralType
+from repositories.db_models import FeedforwardNeuralConfig, ConvolutionalNeuralConfig, NeuralConfig
 
 
 class GridSearch:
@@ -9,7 +10,13 @@ class GridSearch:
     def __init__(self):
         pass
 
-    def get_fnn_sequence(self, hyper_params: Dict) -> Sequence[FeedforwardNeuralConfig]:
+    def get_sequence(self, hyper_params: Dict, type: NeuralType) -> Sequence[NeuralConfig]:
+        if type == "Feedforward":
+            return self._get_fnn_sequence(hyper_params)
+        elif type == "Convolutional":
+            return self._get_cnn_sequence(hyper_params)
+
+    def _get_fnn_sequence(self, hyper_params: Dict) -> Sequence[FeedforwardNeuralConfig]:
         param_list = list(hyper_params.items())
         sequence = self._get_sequence(param_list)
         config_sequence = [
@@ -24,7 +31,7 @@ class GridSearch:
         ]
         return [FeedforwardNeuralConfig.from_dict(config) for config in config_sequence]
 
-    def get_cnn_sequence(self, hyper_params: Dict) -> Sequence[ConvolutionalNeuralConfig]:
+    def _get_cnn_sequence(self, hyper_params: Dict) -> Sequence[ConvolutionalNeuralConfig]:
         param_list = list(hyper_params.items())
         sequence = self._get_sequence(param_list)
         config_sequence = [
@@ -69,7 +76,8 @@ class GridSearch:
 
 
 if __name__ == '__main__':
-    from experiments.Experiment import Experiment
+    from experiments.Experiment import Experiment, NeuralType
+
     search = GridSearch()
     experiment = Experiment("test", "Convolutional")
     seq = search.get_cnn_sequence(experiment.get_hyper_params())

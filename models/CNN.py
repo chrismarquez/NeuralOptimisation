@@ -63,12 +63,13 @@ class CNN(LoadableModule):
         return [
             (f"linear{self.depth}", nn.Linear(input_size, output_size)),
             (f"act{self.depth}", activation_fn()),
-            (f"out", nn.Linear(output_size, 1))
+            (f"out", nn.Linear(output_size, 1)),
+            (f"reshape_end", Reshape(1))
         ]
 
 
 if __name__ == '__main__':
-    net = CNN(start_size=20, filter_size=7, filters=10, depth=2, activation="ReLU")
+    net = CNN(start_size=20, filter_size=3, filters=10, depth=2, activation="ReLU")
     print(net)
     print(net.count_parameters())
     summary(net, (1, 2))

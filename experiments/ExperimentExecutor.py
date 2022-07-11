@@ -65,11 +65,11 @@ class ExperimentExecutor:
             ExperimentExecutor._run_locally(jobs)
 
     def _get_initial_jobs(self, experiment: Experiment) -> List[ModelJob]:
-        hyper_params = experiment.hyper_params
+        hyper_params = experiment.get_hyper_params()
         searcher = GridSearch()
         jobs = []
         for dataset_id in self._sample_repo.get_all_dataset_id():
-            config_pool = searcher.get_fnn_sequence(hyper_params)
+            config_pool = searcher.get_sequence(hyper_params, experiment.type)
             for config in config_pool:
                 job = ModelJob(dataset_id, config, experiment.exp_id)
                 jobs.append(job)
@@ -84,7 +84,7 @@ if __name__ == '__main__':
         ROOT_DIR = os.path.dirname(os.path.abspath(__file__)).split("/experiments")[0]
         sample = SampleDatasetRepository("mongodb://localhost:27017/")
         cluster = Cluster(ROOT_DIR)
-        experiment = Experiment("test-synchro")
+        experiment = Experiment("test-synchro", "Convolutional")
         exec = ExperimentExecutor(cluster, sample)
         await exec.run_experiment(experiment, test_run=True, use_cluster=True)
 

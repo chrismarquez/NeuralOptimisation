@@ -25,8 +25,8 @@ def _get_cnn_hyper_params():
     return {
         "learning_rate": [1E-6, 3E-7],
         "batch_size": [128, 512],
-        "filter_size": [7],
-        "depth": [4],
+        "filter_size": [3, 5, 7],
+        "depth": [2, 4],
         "learnable_parameters": [10_000 * i for i in range(1, 10)],
         "activation_fn": ["ReLU", "Sigmoid"],
     }
@@ -36,7 +36,6 @@ def _get_cnn_hyper_params():
 class Experiment:
     exp_id: str
     type: NeuralType
-
 
     def get_hyper_params(self) -> Dict:
         if self.type == "Feedforward":
