@@ -8,7 +8,8 @@ import numpy
 
 
 @dataclass
-class Polynomial:
+class \
+    Polynomial:
     values: List[float]
 
     @staticmethod
@@ -36,12 +37,8 @@ class Polynomial:
         return Polynomial([2.0 ** (l - 1) * coeff ** 3, coeff])
 
     @staticmethod
-    def final_fc_coeff(n: int, f: int, i: int) -> int:
-        if i == 0:
-            return n
-        else:
-            res = int(math.floor(0.5 * (Polynomial.final_fc_coeff(n, f, i - 1) - f + 1)))
-            return max(1, res)
+    def final_fc_coeff(n: int, f: int, l: int) -> int:
+        return int(math.floor(0.25 * (n - l * (f - 1))))
 
     def __neg__(self):
         return Polynomial([-it for it in self.values])

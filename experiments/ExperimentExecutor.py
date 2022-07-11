@@ -69,7 +69,7 @@ class ExperimentExecutor:
         searcher = GridSearch()
         jobs = []
         for dataset_id in self._sample_repo.get_all_dataset_id():
-            config_pool = searcher.get_sequence(hyper_params)
+            config_pool = searcher.get_fnn_sequence(hyper_params)
             for config in config_pool:
                 job = ModelJob(dataset_id, config, experiment.exp_id)
                 jobs.append(job)

@@ -10,7 +10,7 @@ from models.FNN import FNN
 from models.LoadableModule import LoadableModule
 from models.Regressor import Regressor
 from models.Trainer import Trainer
-from repositories.db_models import NeuralConfig, NeuralProperties
+from repositories.db_models import FeedforwardNeuralConfig, NeuralProperties
 
 LayerSize = int
 NetworkDepth = int
@@ -21,7 +21,7 @@ class Estimator(BaseEstimator, RegressorMixin):
     def __init__(
         self,
         name: str = "",
-        config: NeuralConfig = NeuralConfig(1E-3, 128, 138, 2, "ReLU"),
+        config: FeedforwardNeuralConfig = FeedforwardNeuralConfig(1E-3, 128, 138, 2, "ReLU"),
         epochs: int = 200
     ):
         self.name = name
@@ -53,4 +53,4 @@ class Estimator(BaseEstimator, RegressorMixin):
 
 
 if __name__ == '__main__':
-    est = Estimator(name="ackley", config=NeuralConfig(1E-3, 128, 138, 2, "ReLU"))
+    est = Estimator(name="ackley", config=FeedforwardNeuralConfig(1E-3, 128, 138, 2, "ReLU"))

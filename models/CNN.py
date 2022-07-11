@@ -49,9 +49,9 @@ class CNN(LoadableModule):
         for i in range(self.depth):
             layers.append((f"conv2d{i + 1}", nn.Conv2d(in_channels, out_channels, self.filter_size)))
             layers.append((f"act{i + 1}", activation_fn())),
-            layers.append((f"pool{i + 1}", nn.MaxPool2d(2)))
             in_channels = out_channels
             out_channels = 2 * out_channels
+        layers.append((f"pool", nn.MaxPool2d(4)))
         output_size = Polynomial.final_fc_coeff(self.start_size, self.filter_size, self.depth)
         layers.append(("flatten", Reshape(1, in_channels * output_size ** 2)))  # Flatten 3D Tensor to 1D Array
         return layers
@@ -68,7 +68,7 @@ class CNN(LoadableModule):
 
 
 if __name__ == '__main__':
-    net = CNN(start_size=20, filter_size=3, filters=20, depth=2, activation="ReLU")
+    net = CNN(start_size=20, filter_size=7, filters=10, depth=2, activation="ReLU")
     print(net)
     print(net.count_parameters())
     summary(net, (1, 2))

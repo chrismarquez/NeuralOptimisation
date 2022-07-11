@@ -9,14 +9,14 @@ from models.LoadableModule import LoadableModule
 from models.Trainer import Trainer
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
-from repositories.db_models import NeuralConfig, NeuralProperties, NeuralModel
+from repositories.db_models import FeedforwardNeuralConfig, NeuralProperties, NeuralModel
 
 from cluster.JobContainer import JobContainer
 
 
 class ModelJob(Job):
 
-    def __init__(self, dataset_id: str, config: NeuralConfig, experiment_id: str):
+    def __init__(self, dataset_id: str, config: FeedforwardNeuralConfig, experiment_id: str):
         super().__init__(experiment_id)
         self.dataset_id = dataset_id
         self.config = config
