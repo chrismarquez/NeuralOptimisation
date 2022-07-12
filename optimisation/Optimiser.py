@@ -17,6 +17,8 @@ from models.FNN import FNN
 from models.LoadableModule import LoadableModule
 from repositories.db_models import NeuralModel, Bounds
 
+from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
+
 
 class Optimiser:
 
@@ -71,7 +73,6 @@ class Optimiser:
     @staticmethod
     def _load(net: LoadableModule, input_bounds: Bounds) -> Optimiser:
         try:
-            from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
             with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as file:
                 Optimiser._onnx_export(net, file)
                 write_onnx_model_with_bounds(file.name, None, input_bounds.to_pyomo_bounds())

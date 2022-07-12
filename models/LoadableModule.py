@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import gc
 import tempfile
-from typing import Callable, TypeVar, OrderedDict, Literal, Mapping, Tuple, List
+from typing import Callable, TypeVar, OrderedDict, Literal, Mapping, Tuple
 import torch
-from keras import Sequential
 from torch import nn
 
 from abc import ABC, abstractmethod
