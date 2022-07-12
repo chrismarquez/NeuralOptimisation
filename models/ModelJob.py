@@ -3,13 +3,14 @@ from typing import Optional
 from cluster.Job import Job, JobType
 from cluster.JobInit import init_job
 from data.Dataset import Dataset
+from experiments.Experiment import NeuralType
 from models.Estimator import Estimator
 from models.FNN import FNN
 from models.LoadableModule import LoadableModule
 from models.Trainer import Trainer
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
-from repositories.db_models import FeedforwardNeuralConfig, NeuralProperties, NeuralModel
+from repositories.db_models import FeedforwardNeuralConfig, NeuralProperties, NeuralModel, ConvolutionalNeuralConfig
 
 from cluster.JobContainer import JobContainer
 
@@ -63,11 +64,18 @@ class ModelJob(Job):
             return None
 
     def save_model(self, trainer: Trainer, props: NeuralProperties) -> str:
+        if type(self.config) is FeedforwardNeuralConfig:
+            neural_type: NeuralType = "Feedforward"
+        elif type(self.config) is ConvolutionalNeuralConfig:
+            neural_type: NeuralType = "Convolutional"
+        else:
+            raise RuntimeError("Unrecognized Network Type")
         model = NeuralModel(
-            self.function_name,
-            self.config,
-            props,
-            trainer.get_model_data(),
+            function=self.function_name,
+            type=neural_type,
+            neural_config=self.config,
+            neural_properties=props,
+            model_data=trainer.get_model_data(),
             experiment_id=self.experiment_id
         )
         return self.neural_repo.save(model)
