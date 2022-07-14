@@ -33,7 +33,12 @@ class Container(containers.DeclarativeContainer):
 
     # Executors
 
-    experiment_executor = providers.Singleton(ExperimentExecutor, cluster=cluster, sample_repo=sample_repository)
+    experiment_executor = providers.Singleton(
+        ExperimentExecutor,
+        cluster=cluster,
+        neural_repo=neural_repository,
+        sample_repo=sample_repository
+    )
 
     print("Dependencies ready.")
 

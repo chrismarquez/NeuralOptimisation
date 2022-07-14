@@ -13,7 +13,7 @@ from torch import Tensor
 T = TypeVar('T')
 Getter = Callable[[], T]
 
-Activation = Literal["ReLU", "Tanh", "Sigmoid"]
+Activation = Literal["ReLU", "Tanh", "Sigmoid", "Softplus"]
 ActivationFn = Callable[[], nn.Module]
 Layer = Tuple[str, nn.Module]
 
@@ -23,6 +23,7 @@ class LoadableModule(nn.Module, ABC):
         "ReLU": lambda: nn.ReLU(),
         "Tanh": lambda: nn.Tanh(),
         "Sigmoid": lambda: nn.Sigmoid(),
+        "Softplus": lambda: nn.Softplus()
     }
 
     @abstractmethod

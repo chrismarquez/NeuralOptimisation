@@ -15,6 +15,7 @@ from data import functions
 from models.FNN import FNN
 # likely from an API design error, omlt.io requires the tensorflow module even if its not being used
 from models.LoadableModule import LoadableModule
+from optimisation.Solver import Solver, LinearSolver
 from repositories.db_models import NeuralModel, Bounds
 
 from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
@@ -22,7 +23,7 @@ from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_
 
 class Optimiser:
 
-    def __init__(self, network_definition: NetworkDefinition, solver_name: str = 'cbc'):
+    def __init__(self, network_definition: NetworkDefinition, solver_type: Solver = LinearSolver.CBC):
         model = pyo.ConcreteModel()
 
         model.net = OmltBlock()
@@ -51,7 +52,7 @@ class Optimiser:
         model.objective = pyo.Objective(expr=model.output, sense=pyomo.core.minimize)
 
         self._model = model
-        self._solver = pyo.SolverFactory(solver_name)
+        self._solver = pyo.SolverFactory(solver_type.value)
         self.optimisation_time = 0.0
 
     def solve(self):
@@ -60,27 +61,23 @@ class Optimiser:
         return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
 
     @staticmethod
-    def load_from_path(path: str, input_bounds: Bounds, build_net: Callable[[], LoadableModule]) -> Optimiser:
+    def load_from_path(path: str, input_bounds: Bounds, solver_type: Solver, build_net: Callable[[], LoadableModule]) -> Optimiser:
         net = build_net().load(path)
-        return Optimiser._load(net, input_bounds)
+        return Optimiser._load(net, input_bounds, solver_type)
 
     @staticmethod
-    def load_from_model(neural_model: NeuralModel, input_bounds: Bounds) -> Optimiser:
+    def load_from_model(neural_model: NeuralModel, input_bounds: Bounds, solver_type: Solver) -> Optimiser:  # TODO: Support CNN
         _, _, net_size, depth, activation = neural_model.neural_config
         net = FNN(net_size, depth, activation).load_bytes(neural_model.model_data)
-        return Optimiser._load(net, input_bounds)
+        return Optimiser._load(net, input_bounds, solver_type)
 
     @staticmethod
-    def _load(net: LoadableModule, input_bounds: Bounds) -> Optimiser:
-        try:
-            with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as file:
-                Optimiser._onnx_export(net, file)
-                write_onnx_model_with_bounds(file.name, None, input_bounds.to_pyomo_bounds())
-                network_definition = load_onnx_neural_network_with_bounds(file.name)
-                return Optimiser(network_definition)
-        except ModuleNotFoundError:
-            print("TensorFlow is oddly needed for this module")
-            pass
+    def _load(net: LoadableModule, input_bounds: Bounds, solver_type: Solver) -> Optimiser:
+        with tempfile.NamedTemporaryFile(suffix=".onnx", delete=False) as file:
+            Optimiser._onnx_export(net, file)
+            write_onnx_model_with_bounds(file.name, None, input_bounds.to_pyomo_bounds())
+            network_definition = load_onnx_neural_network_with_bounds(file.name)
+            return Optimiser(network_definition, solver_type)
 
     @staticmethod
     def finished_optimisations(function: str):
@@ -109,12 +106,12 @@ class Optimiser:
 
 if __name__ == '__main__':
     from repositories.NeuralModelRepository import NeuralModelRepository
+
     [x_max] = [x_max for fn, x_max in functions.pool.items() if fn == functions.sum_squares]
     input_bounds: Bounds = Bounds(0.2)
     print(input_bounds)
     repo = NeuralModelRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
     model = repo.get("62b4969f79d0fbcab4b0ff0b")
-    optimiser = Optimiser.load_from_model(model, input_bounds)
+    optimiser = Optimiser.load_from_model(model, input_bounds, solver_type=Solver.CBC)
     values = optimiser.solve()
     print(values)
-

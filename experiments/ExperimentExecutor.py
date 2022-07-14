@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Awaitable, Optional
+from typing import List, Awaitable, Optional, cast
 
 from cluster.Cluster import Cluster
 from cluster.Job import Job
@@ -9,6 +9,8 @@ from experiments.Experiment import Experiment
 from models.GridSearch import GridSearch
 from models.ModelJob import ModelJob
 from optimisation.OptimisationJob import OptimisationJob
+from optimisation.Solver import solvable_by, Solver
+from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
 from repositories.db_models import Bounds
 
@@ -24,14 +26,9 @@ class ExperimentExecutor:
             print(job.encode())
             job.run(container)
 
-    @staticmethod
-    async def _optimisation_pipe(model_task: Awaitable[str]) -> Optional[Job]:
-        model_id = await model_task
-        bounds = Bounds(0.2)
-        return OptimisationJob(model_id, bounds)
-
-    def __init__(self, cluster: Cluster, sample_repo: SampleDatasetRepository):
+    def __init__(self, cluster: Cluster, neural_repo: NeuralModelRepository,sample_repo: SampleDatasetRepository):
         self._cluster = cluster
+        self._neural_repo = neural_repo
         self._sample_repo = sample_repo
 
         self._pipeline = Pipeline([
@@ -39,7 +36,7 @@ class ExperimentExecutor:
                 name="Neural Trainer",
                 capacity=50,
                 submit=self._cluster.submit,
-                pipe=ExperimentExecutor._optimisation_pipe
+                pipe=lambda model_task: self._optimisation_pipe(model_task)
             ),
             Segment(
                 name="Optimiser",
@@ -47,6 +44,13 @@ class ExperimentExecutor:
                 submit=self._cluster.submit
             )
         ])
+
+    async def _optimisation_pipe(self, model_task: Awaitable[str]) -> List[Job]:
+        model_id = await model_task
+        bounds = Bounds(0.2)
+        model = self._neural_repo.get(model_id)
+        activation = model.neural_config.activation_fn
+        return [OptimisationJob(model_id, bounds, solver) for solver in solvable_by(activation)]
 
     async def run_experiment(
         self,

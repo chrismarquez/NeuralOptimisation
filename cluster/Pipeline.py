@@ -7,12 +7,12 @@ from cluster.Job import Job
 T = TypeVar('T')
 
 Submit = Callable[[Job], Awaitable[Task]]
-Pipe = Callable[[Task], Awaitable[Optional[Job]]]
+Pipe = Callable[[Task], Awaitable[List[Job]]]
 
 
-async def _end_pipe(task: Awaitable[None]) -> Optional[Job]:
+async def _end_pipe(task: Awaitable[None]) -> List[Job]:
     await task
-    return None
+    return []
 
 
 class Segment:
@@ -29,7 +29,7 @@ class Segment:
         self.job_queue: Queue[T] = Queue(maxsize=capacity)
         self.submit = submit
         self.pipe = pipe
-        self.next: Optional[Segment] = None
+        self.next_segment: Optional[Segment] = None
         self._consumer: Optional[Task] = None
 
     async def enqueue(self, job: T):
@@ -42,15 +42,15 @@ class Segment:
         await self.job_queue.join()
         self._consumer.cancel()
 
-    async def _pipe_and_mark(self, task: Task) -> Optional[Job]:
+    async def _pipe_and_mark(self, task: Task) -> List[Job]:
         try:
-            job = await self.pipe(task)
+            jobs = await self.pipe(task)
             self.job_completed += 1
         except RuntimeError:
             print(f"Could not pipe task {task}")
-            job = None
+            jobs = []
         self.job_queue.task_done()
-        return job
+        return jobs
 
     async def _consume(self):
         while True:
@@ -59,9 +59,10 @@ class Segment:
             asyncio.create_task(self._post_process(task))
 
     async def _post_process(self, task: Task):
-        next_job = await self._pipe_and_mark(task)
-        if self.next is not None and next_job is not None:
-            await self.next.enqueue(next_job)
+        next_jobs = await self._pipe_and_mark(task)
+        if self.next_segment is not None:
+            for job in next_jobs:
+                await self.next_segment.enqueue(job)
 
 
 class Pipeline:
@@ -77,7 +78,7 @@ class Pipeline:
     def add(self, segment: Segment):
         if len(self.segments) != 0:
             last = self.segments[-1]
-            last.next = segment
+            last.next_segment = segment
         self.segments.append(segment)
 
     async def execute(self, jobs: List[Job]):
