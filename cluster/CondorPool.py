@@ -49,7 +49,7 @@ class CondorPool(WorkerPool):
 
     async def _submit(self, job: Job):
         await self._request_slot()
-        script = self._to_runnable_script(job)
+        script = self._runnable_script_from(job)
         condor_spec = self.get_condor_spec(script)
         condor_submit = f"{CONDOR_PATH}/condor_submit {condor_spec}"
         try:

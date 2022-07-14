@@ -42,7 +42,7 @@ class SlurmPool(WorkerPool):
 
     async def _submit(self, job: Job) -> int:
         await self._request_slot()
-        script = self._to_runnable_script(job)
+        script = self._runnable_script_from(job)
         sbatch = f"sbatch {script}"
         try:
             result = subprocess.run(sbatch, shell=True, capture_output=True)

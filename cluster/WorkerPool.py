@@ -21,7 +21,7 @@ class WorkerPool(ABC):
         await self._slots_queue.get()
         self._slots_queue.task_done()
 
-    def _to_runnable_script(self, job: Job):
+    def _runnable_script_from(self, job: Job) -> str:
         cmd = inspect.cleandoc(
             f"""
                 #!/bin/bash
@@ -31,7 +31,7 @@ class WorkerPool(ABC):
         )
         return self._write_script_file(cmd)
 
-    def _write_script_file(self, content: str, suffix=".sh"):
+    def _write_script_file(self, content: str, suffix=".sh") -> str:
         path = f"{self.root_dir}/temp"
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False, mode="w", dir=path) as file:
             file.write(content)
