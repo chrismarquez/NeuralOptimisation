@@ -15,7 +15,7 @@ from data import functions
 from models.FNN import FNN
 # likely from an API design error, omlt.io requires the tensorflow module even if its not being used
 from models.LoadableModule import LoadableModule
-from optimisation.Solver import Solver, LinearSolver
+from optimisation.Solver import Solver, LinearSolver, NonLinearSolver
 from repositories.db_models import NeuralModel, Bounds
 
 from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
@@ -24,8 +24,9 @@ from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_
 class Optimiser:
 
     def __init__(self, network_definition: NetworkDefinition, solver_type: Solver = LinearSolver.CBC):
-        model = pyo.ConcreteModel()
+        self.solver_type = solver_type
 
+        model = pyo.ConcreteModel()
         model.net = OmltBlock()
         model.x = pyo.Var()
         model.y = pyo.Var()
@@ -56,7 +57,8 @@ class Optimiser:
         self.optimisation_time = 0.0
 
     def solve(self):
-        results = self._solver.solve(self._model, tee=False, options={"threads": 12})
+        options = {} if self.solver_type == NonLinearSolver.IPOPT else {"threads": 12}
+        results = self._solver.solve(self._model, tee=False, options=options)
         self.optimisation_time = results['Solver'][0]['Wallclock time']
         return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
 
@@ -106,12 +108,11 @@ class Optimiser:
 
 if __name__ == '__main__':
     from repositories.NeuralModelRepository import NeuralModelRepository
-
     [x_max] = [x_max for fn, x_max in functions.pool.items() if fn == functions.sum_squares]
     input_bounds: Bounds = Bounds(0.2)
     print(input_bounds)
     repo = NeuralModelRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
-    model = repo.get("62b4969f79d0fbcab4b0ff0b")
-    optimiser = Optimiser.load_from_model(model, input_bounds, solver_type=Solver.CBC)
+    model = repo.get("62b4a5e5e99c0fd60ce809d7")
+    optimiser = Optimiser.load_from_model(model, input_bounds, solver_type=NonLinearSolver.IPOPT)
     values = optimiser.solve()
     print(values)
