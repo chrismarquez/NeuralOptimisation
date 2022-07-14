@@ -26,7 +26,7 @@ class WorkerPool(ABC):
             f"""
                 #!/bin/bash
                 source {self.root_dir}/venv/bin/activate
-                GRB_LICENSE_FILE="/homes/csm21/gurobi_licenses/$(hostname)" APP_ENV=PROD {job.as_command()}
+                GRB_LICENSE_FILE="/homes/csm21/gurobi_licenses/$(hostname)/gurobi.lic" APP_ENV=PROD {job.as_command()}
             """
         )
         return self._write_script_file(cmd)
