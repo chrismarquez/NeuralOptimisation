@@ -95,7 +95,7 @@ class CondorPool(WorkerPool):
 
     def test(self):
         _, stdout, _ = self.ssh_client.exec_command(f"{CONDOR_PATH}/condor_submit {self.root_dir}/test.job")
-        print(type(str(stdout.read())))
+        print(str(stdout.read()))
 
     def job_type(self) -> JobType:
         return self.config.job_type
