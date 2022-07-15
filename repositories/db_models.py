@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 
 from typing import Optional, Dict, List, Union, Literal
 
@@ -16,6 +16,7 @@ from dacite import from_dict
 
 
 # Bounds = Mapping[int, Tuple[float, float]]
+from optimisation.Solver import Solver
 
 
 @dataclass
@@ -96,6 +97,7 @@ class OptimisationProperties(DataModel):
     x: float
     y: float
     input_bounds: Bounds
+    solver_type: Solver
     location_error: float
     optimum_error: float
     computation_time: float
@@ -112,7 +114,7 @@ class NeuralModel(DataModel):
     neural_config: NeuralConfig
     neural_properties: NeuralProperties
     model_data: bytes
-    optimisation_properties: Optional[OptimisationProperties] = None
+    optimisation_properties: List[OptimisationProperties] = field(default_factory=list)
     id: Optional[str] = None
     experiment_id: Optional[str] = None
 
@@ -128,7 +130,7 @@ class NeuralModel(DataModel):
     @staticmethod
     def from_dict(document: Dict) -> NeuralModel:
         opt_props = document.get("optimisation_properties", None)
-        opt_props = OptimisationProperties.from_dict(opt_props) if opt_props is not None else None
+        opt_props = [OptimisationProperties.from_dict(props) for props in opt_props]
         return NeuralModel(
             id=str(document["_id"]),
             function=document["function"],

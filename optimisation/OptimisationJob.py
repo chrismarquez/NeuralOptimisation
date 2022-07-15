@@ -26,8 +26,10 @@ class OptimisationJob(Job):
         location_error = metrics.mean_squared_error([0.0, 0.0], [x_opt, y_opt], squared=False)
         optimum_error = metrics.mean_squared_error([0.0], [z_opt], squared=False)
         computation_time = optimiser.optimisation_time
-        neural_model.optimisation_properties = OptimisationProperties(
-            x_opt, y_opt, self.input_bounds, location_error, optimum_error, computation_time
+        neural_model.optimisation_properties.append(
+            OptimisationProperties(
+                x_opt, y_opt, self.input_bounds, self.solver_type, location_error, optimum_error, computation_time
+            )
         )
         neural_repo.update(neural_model)
 
