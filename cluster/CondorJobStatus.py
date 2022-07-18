@@ -48,7 +48,7 @@ class CondorJobStatus:
 
         return [
             CondorJobStatus(
-                job_id=CondorJobStatus._format_job_id(attributes["ID"]),
+                job_id=CondorJobStatus.format_job_id(attributes["ID"]),
                 user_id=attributes["OWNER"],
                 submit_time=attributes["SUBMITTED"],
                 run_time=attributes["RUN_TIME"],
