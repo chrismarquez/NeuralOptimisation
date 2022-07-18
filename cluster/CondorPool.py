@@ -85,8 +85,8 @@ class CondorPool(WorkerPool):
             f"""
                 universe = vanilla
                 executable = {script}
-                output = uname.$(Process).out
-                error = uname.$(Process).err
+                output = uname.test.out
+                error = uname.test.err
                 Requirements = {self._get_node_req()}
                 log = uname.log
                 queue
