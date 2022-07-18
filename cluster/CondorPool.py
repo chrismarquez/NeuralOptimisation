@@ -65,7 +65,7 @@ class CondorPool(WorkerPool):
             await self._release_slot()
 
     async def status(self, job_id: str) -> Optional[CondorJobStatus]:
-        cmd = f"{CONDOR_PATH}/condor_q {self.config.user}"
+        cmd = f"{CONDOR_PATH}/condor_q {self.config.user} -nobatch"
         _, stdout, _ = self.ssh_client.exec_command(cmd)
         log = stdout.read().decode("utf-8")
         job_status_list = CondorJobStatus.from_log(log)
@@ -95,9 +95,9 @@ class CondorPool(WorkerPool):
         return self._write_script_file(cmd, suffix=".cmd")
 
     def _get_node_req(self):
-        if self.config.job_type == "CPU":
+        if self.config.job_type == "GPU":
             return """regexp("^(gpu)[0-9][0-9]", TARGET.Machine) == True"""
-        elif self.config.job_type == "GPU":
+        elif self.config.job_type == "CPU":
             return """regexp("^(ray)0[1-8]", TARGET.Machine) == True"""
 
     def test(self):

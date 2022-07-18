@@ -30,7 +30,6 @@ class CondorJobStatus:
             if record == "":
                 break
             raw_fields = record.split()
-            raw_fields = [field for field in raw_fields if field != "ID:"]
             id_fields = raw_fields[:2]
             fields = id_fields + [" ".join(raw_fields[2:4])] + raw_fields[4:len(titles)]
             args = raw_fields[len(titles):]
