@@ -34,6 +34,7 @@ class CondorPool(WorkerPool):
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
         self.ssh_client.connect(self.condor_server, username=config.user)
+        self.ssh_client.exec_command(f"cd {self.root_dir}")
 
     async def submit(self, job: Job) -> Awaitable[str]:
         condor_job_id = await self._submit(job)
