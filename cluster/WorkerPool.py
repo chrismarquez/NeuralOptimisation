@@ -26,7 +26,7 @@ class WorkerPool(ABC):
     def _runnable_script_from(self, job: Job) -> str:
         cmd = inspect.cleandoc(
             f"""
-                #!/bin/bash
+                #!/bin/zsh
                 cd {self.root_dir}
                 source {self.root_dir}/venv/bin/activate
                 GRB_LICENSE_FILE="/homes/csm21/gurobi_licenses/$(hostname)/gurobi.lic" APP_ENV=PROD {job.as_command()}
