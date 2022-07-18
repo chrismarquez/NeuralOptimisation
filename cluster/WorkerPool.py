@@ -1,4 +1,6 @@
 import inspect
+import os
+import stat
 import tempfile
 from abc import ABC, abstractmethod
 from asyncio import Queue
@@ -31,13 +33,15 @@ class WorkerPool(ABC):
         )
         return self._write_script_file(cmd)
 
-    def _write_script_file(self, content: str, suffix=".sh") -> str:
+    def _write_script_file(self, content: str, suffix=".sh") -> str: # Returs the file name of the created script
         path = f"{self.root_dir}/temp"
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False, mode="w", dir=path) as file:
             file.write(content)
             script = file.name
             print(script)
-            return script
+        st = os.stat(script)
+        os.chmod(script, st.st_mode | stat.S_IEXEC)
+        return script
 
     @abstractmethod
     async def submit(self, job: Job) -> Awaitable[str]:
