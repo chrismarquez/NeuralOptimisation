@@ -27,7 +27,7 @@ class WorkerPool(ABC):
         cmd = inspect.cleandoc(
             f"""
                 #!/bin/bash
-                pwd
+                cd {self.root_dir}
                 source {self.root_dir}/venv/bin/activate
                 GRB_LICENSE_FILE="/homes/csm21/gurobi_licenses/$(hostname)/gurobi.lic" APP_ENV=PROD {job.as_command()}
             """
