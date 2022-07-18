@@ -22,9 +22,9 @@ class CondorConfig:
 class CondorPool(WorkerPool):
 
     @staticmethod
-    def _parse_job_id(result: List[str]) -> int:
+    def _parse_job_id(result: List[str]) -> str:
         raw_job_id = result[-1].rstrip("\\n").split("submitted to cluster ")[-1]
-        return int(float(raw_job_id))
+        return str(int(float(raw_job_id)))
 
     def __init__(self, root_dir: str, capacity: int, condor_server: str, config: CondorConfig):
         super().__init__(capacity, root_dir)
@@ -36,9 +36,14 @@ class CondorPool(WorkerPool):
         self.ssh_client.connect(self.condor_server, username=config.user)
 
     async def submit(self, job: Job) -> Awaitable[str]:
-        pass
+        condor_job_id = await self._submit(job)
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+        task = self._post_process(future, condor_job_id)
+        asyncio.create_task(task)
+        return future
 
-    async def _post_process(self, future: Future[str], condor_job_id: int):
+    async def _post_process(self, future: Future[str], condor_job_id: str):
         while True:
             status = await self.status(condor_job_id)
             print(f"Job Status {condor_job_id}: {status}")
@@ -47,17 +52,19 @@ class CondorPool(WorkerPool):
             await asyncio.sleep(3)
         future.set_result(str(condor_job_id))
 
-    async def _submit(self, job: Job):
+    async def _submit(self, job: Job) -> str:
         await self._request_slot()
         script = self._runnable_script_from(job)
         condor_spec = self.get_condor_spec(script)
         condor_submit = f"{CONDOR_PATH}/condor_submit {condor_spec}"
         try:
             _, stdout, _ = self.ssh_client.exec_command(condor_submit)
+            lines = stdout.readlines()
+            return CondorPool._parse_job_id(lines)
         except ValueError:
             await self._release_slot()
 
-    async def status(self, job_id) -> Optional[CondorJobStatus]:  # None stands for Completed
+    async def status(self, job_id: str) -> Optional[CondorJobStatus]:
         cmd = f"{CONDOR_PATH}/condor_q {self.config.user}"
         _, stdout, _ = self.ssh_client.exec_command(cmd)
         log = str(stdout.read())
@@ -104,4 +111,4 @@ class CondorPool(WorkerPool):
 if __name__ == '__main__':
     config = CondorConfig("csm21", [], "CPU")
     pool = CondorPool("/vol/bitbucket/csm21/NeuralOptimisation", 2, "shell1.doc.ic.ac.uk", config)
-    pool.test()
+
