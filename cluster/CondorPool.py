@@ -24,7 +24,7 @@ class CondorPool(WorkerPool):
     @staticmethod
     def _parse_job_id(result: List[str]) -> str:
         raw_job_id = result[-1].rstrip("\\n").split("submitted to cluster ")[-1]
-        return str(int(float(raw_job_id)))
+        return CondorJobStatus.format_job_id(raw_job_id)
 
     def __init__(self, root_dir: str, capacity: int, condor_server: str, config: CondorConfig):
         super().__init__(capacity, root_dir)

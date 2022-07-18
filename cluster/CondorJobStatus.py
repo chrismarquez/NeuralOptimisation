@@ -10,7 +10,6 @@ class CondorJobState(Enum):
     I = "IDLE"
     H = "HOLD"
 
-
 @dataclass
 class CondorJobStatus:
     job_id: str
@@ -19,6 +18,10 @@ class CondorJobStatus:
     run_time: str
     job_state: CondorJobState
     cmd: str
+
+    @staticmethod
+    def format_job_id(raw_job_id: str):
+        return str(int(float(raw_job_id)))
 
     @staticmethod
     def from_log(log: str) -> List[CondorJobStatus]:
@@ -45,7 +48,7 @@ class CondorJobStatus:
 
         return [
             CondorJobStatus(
-                job_id=attributes["ID"],
+                job_id=CondorJobStatus._format_job_id(attributes["ID"]),
                 user_id=attributes["OWNER"],
                 submit_time=attributes["SUBMITTED"],
                 run_time=attributes["RUN_TIME"],
