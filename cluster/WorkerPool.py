@@ -28,13 +28,14 @@ class WorkerPool(ABC):
             f"""
                 #!/bin/zsh
                 cd {self.root_dir}
+                source ~/.zshrc
                 source {self.root_dir}/venv/bin/activate
                 GRB_LICENSE_FILE="/homes/csm21/gurobi_licenses/$(hostname)/gurobi.lic" APP_ENV=PROD {job.as_command()}
             """
         )
         return self._write_script_file(cmd)
 
-    def _write_script_file(self, content: str, suffix=".sh") -> str: # Returs the file name of the created script
+    def _write_script_file(self, content: str, suffix=".sh") -> str:  # Returns the file name of the created script
         path = f"{self.root_dir}/temp"
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False, mode="w", dir=path) as file:
             file.write(content)
