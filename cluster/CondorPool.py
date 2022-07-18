@@ -67,7 +67,7 @@ class CondorPool(WorkerPool):
     async def status(self, job_id: str) -> Optional[CondorJobStatus]:
         cmd = f"{CONDOR_PATH}/condor_q {self.config.user}"
         _, stdout, _ = self.ssh_client.exec_command(cmd)
-        log = str(stdout.read())
+        log = stdout.read().decode("utf-8")
         job_status_list = CondorJobStatus.from_log(log)
         filtered_status = [status for status in job_status_list if status.job_id == job_id]
         if len(filtered_status) == 0:
