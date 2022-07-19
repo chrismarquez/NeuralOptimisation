@@ -40,7 +40,6 @@ class WorkerPool(ABC):
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False, mode="w", dir=path) as file:
             file.write(content)
             script = file.name
-            print(script)
         st = os.stat(script)
         os.chmod(script, st.st_mode | stat.S_IEXEC)
         return script

@@ -53,7 +53,6 @@ class NeuralModelRepository:
     def update(self, model: NeuralModel) -> None:
         query = {"_id": ObjectId(model.id)}
         document = model.to_dict()
-        print(document)
         del document["id"]
         self._collection.replace_one(query, document)
 
