@@ -1,29 +1,18 @@
 from __future__ import annotations
 
-from enum import Enum
-from typing import List, cast
+from typing import List, Union, Literal
 
 from models.LoadableModule import Activation
 
 
 def solvable_by(activation: Activation) -> List[Solver]:
     if activation == "ReLU":
-        solver_type = LinearSolver
+        return ["cbc", "gurobi"]
     else:
-        solver_type = NonLinearSolver
-    return [cast(Solver, solver) for solver in solver_type]
+        return ["ipopt", "gurobi"]
 
 
-class Solver(Enum):
-    pass
+LinearSolver = Literal["cbc", "gurobi"]
+NonLinearSolver = Literal["ipopt", "gurobi"]
 
-
-class LinearSolver(Solver):
-    CBC = "cbc"
-    GUROBI = "gurobi"
-
-
-class NonLinearSolver(Solver):
-    IPOPT = "ipopt"
-    GUROBI = "gurobi"
-
+Solver = Union[LinearSolver, NonLinearSolver]

@@ -23,7 +23,7 @@ from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_
 
 class Optimiser:
 
-    def __init__(self, network_definition: NetworkDefinition, solver_type: Solver = LinearSolver.CBC):
+    def __init__(self, network_definition: NetworkDefinition, solver_type: Solver = "cbc"):
         self.solver_type = solver_type
 
         model = pyo.ConcreteModel()
@@ -53,11 +53,11 @@ class Optimiser:
         model.objective = pyo.Objective(expr=model.output, sense=pyomo.core.minimize)
 
         self._model = model
-        self._solver = pyo.SolverFactory(solver_type.value)
+        self._solver = pyo.SolverFactory(solver_type)
         self.optimisation_time = 0.0
 
     def solve(self):
-        options = {} if self.solver_type == NonLinearSolver.IPOPT else {"threads": 12}
+        options = {} if self.solver_type == "ipopt" else {"threads": 12}
         results = self._solver.solve(self._model, tee=False, options=options)
         self.optimisation_time = results['Solver'][0]['Wallclock time']
         return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)

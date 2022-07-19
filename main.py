@@ -4,6 +4,7 @@ from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 
 from cluster.CondorPool import CondorConfig, CondorPool
+from cluster.JobContainer import JobContainer
 from experiments.Experiment import Experiment
 from experiments.ExperimentExecutor import ExperimentExecutor
 from cluster.Cluster import Cluster
@@ -58,7 +59,7 @@ async def main(container: Container = Provide[Container]):
 async def test_condor():
     config = CondorConfig("csm21", [], "CPU")
     pool = CondorPool("/vol/bitbucket/csm21/NeuralOptimisation", 2, "shell1.doc.ic.ac.uk", config)
-    job = OptimisationJob("62b4969f79d0fbcab4b0ff0b", Bounds(0.2), NonLinearSolver.IPOPT)
+    job = OptimisationJob("62b4969f79d0fbcab4b0ff0b", Bounds(0.2), "ipopt")
     task = await pool.submit(job)
     result = await task
     print(result)

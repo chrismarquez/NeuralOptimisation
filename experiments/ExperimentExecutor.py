@@ -9,7 +9,7 @@ from experiments.Experiment import Experiment
 from models.GridSearch import GridSearch
 from models.ModelJob import ModelJob
 from optimisation.OptimisationJob import OptimisationJob
-from optimisation.Solver import solvable_by, Solver
+from optimisation.Solver import solvable_by
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
 from repositories.db_models import Bounds
