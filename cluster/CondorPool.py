@@ -75,12 +75,13 @@ class CondorPool(WorkerPool):
         job_status_list = CondorJobStatus.from_log(log)
         filtered_status = [status for status in job_status_list if status.job_id == job_id]
         if len(filtered_status) == 0:
+            await self._release_slot()
             return None
         else:
             return filtered_status[0]
 
     def get_job_output(self, job_id: str) -> List[str]:
-        file = f"~/uname.{job_id}.out"
+        file = f"{self.root_dir}/logs/condor/uname.{job_id}.out"
         with open(file) as f:
             return f.readlines()
 
@@ -89,8 +90,8 @@ class CondorPool(WorkerPool):
             f"""
                 universe = vanilla
                 executable = {script}
-                output = uname.$(Process).out
-                error = uname.$(Process).err
+                output = {self.root_dir}/logs/condor/uname.$(ClusterId).out
+                error = {self.root_dir}/logs/condor/uname.$(ClusterId).err
                 Requirements = {self._get_node_req()}
                 log = uname.log
                 queue

@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Awaitable, Optional, cast
+from typing import List, Awaitable
 
 from cluster.Cluster import Cluster
 from cluster.Job import Job
