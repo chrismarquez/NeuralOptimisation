@@ -78,6 +78,8 @@ class Optimiser:
             return float(results['Solver'][0]['Wallclock time'])
         elif self.solver_type == "ipopt":
             return float(results['Solver'][0]['Time'])
+        elif self.solver_type == "gurobi":
+            return float(results['Solver'][0]['Wall time'])
         return -1.0
 
     @staticmethod
@@ -120,6 +122,6 @@ if __name__ == '__main__':
     print(input_bounds)
     repo = NeuralModelRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
     model = repo.get("62b4a5e5e99c0fd60ce809d7")
-    optimiser = Optimiser.load_from_model(model, input_bounds, solver_type="ipopt")
+    optimiser = Optimiser.load_from_model(model, input_bounds, solver_type="gurobi")
     values = optimiser.solve()
     print(values)
