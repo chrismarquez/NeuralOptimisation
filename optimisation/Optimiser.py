@@ -59,7 +59,7 @@ class Optimiser:
     def solve(self):
         options = {} if self.solver_type == "ipopt" else {"threads": 12}
         results = self._solver.solve(self._model, tee=False, options=options)
-        self.optimisation_time = results['Solver'][0]['Wallclock time']
+        self.optimisation_time = self._get_optimisation_time(results)
         return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
 
     @staticmethod
@@ -72,6 +72,13 @@ class Optimiser:
         _, _, net_size, depth, activation = neural_model.neural_config
         net = FNN(net_size, depth, activation).load_bytes(neural_model.model_data)
         return Optimiser._load(net, input_bounds, solver_type)
+
+    def _get_optimisation_time(self, results) -> float:
+        if self.solver_type == "cbc":
+            return float(results['Solver'][0]['Wallclock time'])
+        elif self.solver_type == "ipopt":
+            return float(results['Solver'][0]['Time'])
+        return -1.0
 
     @staticmethod
     def _load(net: LoadableModule, input_bounds: Bounds, solver_type: Solver) -> Optimiser:
