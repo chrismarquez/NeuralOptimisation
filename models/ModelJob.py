@@ -47,7 +47,7 @@ class ModelJob(Job):
             neural_model_id = self.save_model(trainer, neural_props)
         else:
             neural_model_id = model_result.id
-        print(f"NEURAL_MODEL_ID:{neural_model_id}")
+        print(f"NEURAL_MODEL_ID:{neural_model_id}", end="")
 
     def load(self) -> Optional[LoadableModule]:
         existing_models = self.neural_repo.get_by_config(self.function_name, self.config, self.experiment_id)

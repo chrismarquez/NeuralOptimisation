@@ -3,21 +3,15 @@ import asyncio
 from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 
-from cluster.CondorPool import CondorConfig, CondorPool
-from cluster.JobContainer import JobContainer
+from cluster.Cluster import Cluster
+from constants import ROOT_DIR, get_env, get_config
 from experiments.Experiment import Experiment
 from experiments.ExperimentExecutor import ExperimentExecutor
-from cluster.Cluster import Cluster
-from optimisation.OptimisationJob import OptimisationJob
-from optimisation.Solver import LinearSolver, NonLinearSolver
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
 
-from constants import ROOT_DIR, get_env, get_config
-
 
 # TODO: Put relevant Containers to dependency inject both jobs inside cluster and the main driver program
-from repositories.db_models import Bounds
 
 
 class Container(containers.DeclarativeContainer):

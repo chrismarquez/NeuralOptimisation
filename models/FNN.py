@@ -48,7 +48,6 @@ class FNN(LoadableModule):
     # [math.sqrt(32.0/21.0 * 10_000 * i - 32.0/21.0 + (64.0/21.0) ** 2) - 64.0/21.0 for i in range(1, 9)]
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        print(input.size())
         return self.layers(input)
 
 
