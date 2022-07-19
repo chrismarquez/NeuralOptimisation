@@ -59,7 +59,7 @@ async def main(container: Container = Provide[Container]):
 async def test_condor():
     config = CondorConfig("csm21", [], "CPU")
     pool = CondorPool("/vol/bitbucket/csm21/NeuralOptimisation", 2, "shell1.doc.ic.ac.uk", config)
-    job = OptimisationJob("62b4969f79d0fbcab4b0ff0b", Bounds(0.2), "ipopt")
+    job = OptimisationJob("62b4969f79d0fbcab4b0ff0b", Bounds(0.2), "gurobi")
     task = await pool.submit(job)
     result = await task
     print(result)
