@@ -130,7 +130,7 @@ class NeuralModel(DataModel):
     @staticmethod
     def from_dict(document: Dict) -> NeuralModel:
         opt_props = document.get("optimisation_properties", None)
-        opt_props = [OptimisationProperties.from_dict(props) for props in opt_props]
+        opt_props = [OptimisationProperties.from_dict(props) for props in opt_props] if opt_props is not None else []
         return NeuralModel(
             id=str(document["_id"]),
             function=document["function"],

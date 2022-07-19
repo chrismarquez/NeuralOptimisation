@@ -15,7 +15,7 @@ from data import functions
 from models.FNN import FNN
 # likely from an API design error, omlt.io requires the tensorflow module even if its not being used
 from models.LoadableModule import LoadableModule
-from optimisation.Solver import Solver, LinearSolver, NonLinearSolver
+from optimisation.Solver import Solver
 from repositories.db_models import NeuralModel, Bounds
 
 from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
@@ -113,6 +113,6 @@ if __name__ == '__main__':
     print(input_bounds)
     repo = NeuralModelRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
     model = repo.get("62b4a5e5e99c0fd60ce809d7")
-    optimiser = Optimiser.load_from_model(model, input_bounds, solver_type=NonLinearSolver.IPOPT)
+    optimiser = Optimiser.load_from_model(model, input_bounds, solver_type="ipopt")
     values = optimiser.solve()
     print(values)
