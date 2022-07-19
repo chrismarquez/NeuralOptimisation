@@ -47,7 +47,7 @@ class WorkerPool(ABC):
 
     @staticmethod
     def find_model_id(lines: List[str]) -> str:
-        return lines[-1].split("NEURAL_MODEL_ID:")[-1]
+        return lines[-1].split("NEURAL_MODEL_ID:")[-1].removesuffix("\\n")
 
     @abstractmethod
     async def submit(self, job: Job) -> Awaitable[str]:

@@ -52,7 +52,6 @@ class CondorPool(WorkerPool):
         if self.job_type() == "GPU":
             lines = self.get_job_output(condor_job_id)
             model_id = CondorPool.find_model_id(lines)
-            model_id = model_id.removesuffix("\\n")
             future.set_result(model_id)
         else:
             future.set_result(str(condor_job_id))
