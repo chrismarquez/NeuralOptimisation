@@ -49,7 +49,7 @@ class CondorPool(WorkerPool):
             if status is None:
                 break
             await asyncio.sleep(3)
-        if self.job_type() == "CPU":
+        if self.job_type() == "GPU":
             lines = self.get_job_output(condor_job_id)
             model_id = CondorPool.find_model_id(lines)
             model_id = model_id.removesuffix("\\n")
