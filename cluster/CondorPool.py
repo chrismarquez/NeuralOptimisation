@@ -52,6 +52,7 @@ class CondorPool(WorkerPool):
         if self.job_type() == "CPU":
             lines = self.get_job_output(condor_job_id)
             model_id = CondorPool.find_model_id(lines)
+            model_id = model_id.removesuffix("\\n")
             future.set_result(model_id)
         else:
             future.set_result(str(condor_job_id))
@@ -79,7 +80,7 @@ class CondorPool(WorkerPool):
         else:
             return filtered_status[0]
 
-    def get_job_output(self, job_id: int) -> List[str]:
+    def get_job_output(self, job_id: str) -> List[str]:
         file = f"~/uname.{job_id}.out"
         with open(file) as f:
             return f.readlines()
