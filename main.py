@@ -52,17 +52,8 @@ class Container(containers.DeclarativeContainer):
 @inject
 async def main(container: Container = Provide[Container]):
     executor = container.experiment_executor()
-    experiment = Experiment("test-1", "Convolutional")
+    experiment = Experiment("test-2", "Feedforward")
     await executor.run_experiment(experiment, test_run=True)
-
-@inject
-async def test_condor():
-    config = CondorConfig("csm21", [], "CPU")
-    pool = CondorPool("/vol/bitbucket/csm21/NeuralOptimisation", 2, "shell1.doc.ic.ac.uk", config)
-    job = OptimisationJob("62b4a5e5e99c0fd60ce809d7", Bounds(0.2), "gurobi")
-    task = await pool.submit(job)
-    result = await task
-    print(result)
 
 
 if __name__ == '__main__':
@@ -71,4 +62,4 @@ if __name__ == '__main__':
     container.init_resources()
     container.wire(modules=[__name__])
     print("Container ready.")
-    asyncio.run(test_condor())
+    asyncio.run(main())

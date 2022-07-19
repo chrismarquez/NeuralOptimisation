@@ -9,10 +9,10 @@ def solvable_by(activation: Activation) -> List[Solver]:
     if activation == "ReLU":
         return ["cbc", "gurobi"]
     else:
-        return ["ipopt", "gurobi"]
+        return ["ipopt"] # TODO: Add another NLP Solver
 
 
 LinearSolver = Literal["cbc", "gurobi"]
-NonLinearSolver = Literal["ipopt", "gurobi"]
+NonLinearSolver = Literal["ipopt"]
 
 Solver = Union[LinearSolver, NonLinearSolver]

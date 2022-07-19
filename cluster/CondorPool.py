@@ -15,7 +15,6 @@ CONDOR_PATH = "/usr/local/condor/release/bin"
 @dataclass
 class CondorConfig:
     user: str
-    server_list: List[str]
     job_type: JobType
 
 
@@ -109,6 +108,6 @@ class CondorPool(WorkerPool):
 
 
 if __name__ == '__main__':
-    config = CondorConfig("csm21", [], "CPU")
+    config = CondorConfig("csm21", "CPU")
     pool = CondorPool("/vol/bitbucket/csm21/NeuralOptimisation", 2, "shell1.doc.ic.ac.uk", config)
 

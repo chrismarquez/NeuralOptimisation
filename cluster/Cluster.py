@@ -4,6 +4,7 @@ from time import sleep
 import asyncio
 from typing import Awaitable, List, Mapping, Tuple
 
+from cluster.CondorPool import CondorPool, CondorConfig
 from cluster.Job import Job, JobType
 from cluster.SlurmPool import SlurmPool
 from cluster.WorkerPool import WorkerPool
@@ -15,7 +16,9 @@ class Cluster:
         self.root_dir = root_dir
 
         self.pools: List[WorkerPool] = [
-            SlurmPool(root_dir, capacity=2)
+            SlurmPool(root_dir, capacity=2),
+            CondorPool(root_dir, capacity=8, condor_server="shell1.doc.ic.ac.uk", config=CondorConfig("csm21", "CPU")),
+            CondorPool(root_dir, capacity=10, condor_server="shell1.doc.ic.ac.uk", config=CondorConfig("csm21", "GPU"))
         ]
 
         self.consumers: List[Task] = []
