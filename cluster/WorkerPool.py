@@ -4,7 +4,7 @@ import stat
 import tempfile
 from abc import ABC, abstractmethod
 from asyncio import Queue
-from typing import Awaitable
+from typing import Awaitable, List
 
 from cluster.Job import Job, JobType
 
@@ -44,6 +44,10 @@ class WorkerPool(ABC):
         st = os.stat(script)
         os.chmod(script, st.st_mode | stat.S_IEXEC)
         return script
+
+    @staticmethod
+    def find_model_id(lines: List[str]) -> str:
+        return lines[-1].split("NEURAL_MODEL_ID:")[-1]
 
     @abstractmethod
     async def submit(self, job: Job) -> Awaitable[str]:

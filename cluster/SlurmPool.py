@@ -66,8 +66,4 @@ class SlurmPool(WorkerPool):
         with open(file) as f:
             return f.readlines()
 
-    @staticmethod
-    def find_model_id(lines: List[str]) -> str:
-        return lines[-1].split("NEURAL_MODEL_ID:")[-1]
-
 

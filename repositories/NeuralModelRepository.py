@@ -30,10 +30,11 @@ class NeuralModelRepository:
         id_list = self._collection.find(query).distinct("_id")
         return [str(model_id) for model_id in id_list]
 
-    def get_by_config(self, function: str, config: FeedforwardNeuralConfig) -> List[NeuralModel]:
+    def get_by_config(self, function: str, config: FeedforwardNeuralConfig, exp_id: str) -> List[NeuralModel]:
         query = {
             "function": function,
-            "neural_config": config.to_dict()
+            "neural_config": config.to_dict(),
+            "experiment_id": exp_id
         }
         documents = self._collection.find(query)
         return [NeuralModel.from_dict(document) for document in documents]

@@ -7,6 +7,7 @@ from typing import Optional
 
 class SlurmJobState(Enum):
     COMPLETED = "COMPLETED"
+    COMPLETING = "COMPLETING"
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     FAILED = "FAILED"

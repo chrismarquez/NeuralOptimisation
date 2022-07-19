@@ -50,14 +50,14 @@ class ModelJob(Job):
         print(f"NEURAL_MODEL_ID:{neural_model_id}")
 
     def load(self) -> Optional[LoadableModule]:
-        existing_models = self.neural_repo.get_by_config(self.function_name, self.config)
+        existing_models = self.neural_repo.get_by_config(self.function_name, self.config, self.experiment_id)
         model = existing_models[0]
         return FNN(
             self.config.network_size, self.config.depth, self.config.activation_fn
         ).load_bytes(model.model_data)
 
     def search_existing(self) -> Optional[NeuralModel]:
-        existing_models = self.neural_repo.get_by_config(self.function_name, self.config)
+        existing_models = self.neural_repo.get_by_config(self.function_name, self.config, self.experiment_id)
         if len(existing_models) != 0:
             return existing_models[0]
         else:
