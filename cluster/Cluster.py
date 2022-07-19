@@ -1,8 +1,9 @@
+import subprocess
 from asyncio import Queue, Future, Task
 from time import sleep
 
 import asyncio
-from typing import Awaitable, List, Mapping, Tuple
+from typing import Awaitable, List, Mapping, Tuple, Optional
 
 from cluster.CondorPool import CondorPool, CondorConfig
 from cluster.Job import Job, JobType
@@ -22,6 +23,7 @@ class Cluster:
         ]
 
         self.consumers: List[Task] = []
+        self.kerberos_request: Optional[Task] = None
 
         self.type_queues: Mapping[JobType, Queue[Tuple[Future[str], Job]]] = {
             "CPU": Queue(),
@@ -40,10 +42,12 @@ class Cluster:
         for pool in self.pools:
             consumer = asyncio.create_task(self._consume(pool))
             self.consumers.append(consumer)
+        self.kerberos_request = asyncio.create_task(self._request_kerberos_ticket())
 
     def stop(self):
         for consumer in self.consumers:
             consumer.cancel()
+        self.kerberos_request.cancel()
 
     async def _consume(self, pool: WorkerPool):
         job_type = pool.job_type()
@@ -60,3 +64,10 @@ class Cluster:
     async def _on_complete(self, future: Future, pool_future: Awaitable):
         result = await pool_future
         future.set_result(result)
+
+    async def _request_kerberos_ticket(self):
+        minutes = 60
+        sleep_period = 15 * minutes
+        while True:
+            subprocess.run(f"{self}/cronjobs/kerberos.sh", shell=True, capture_output=True)
+            await asyncio.sleep(sleep_period)
