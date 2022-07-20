@@ -12,9 +12,9 @@ from cluster.WorkerPool import WorkerPool
 
 class Cluster:
 
-    def __init__(self, root_dir, condor_server: str, debug: bool):
+    def __init__(self, root_dir, condor_server: str, raw_debug: str):
         self.root_dir = root_dir
-
+        debug = raw_debug == "True"
         self.pools: List[WorkerPool] = [
             SlurmPool(root_dir, capacity=2, debug=debug),
             CondorPool(root_dir, capacity=8, condor_server=condor_server, config=CondorConfig("csm21", "CPU", debug)),

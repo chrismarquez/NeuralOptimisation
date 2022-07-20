@@ -27,7 +27,7 @@ class Container(containers.DeclarativeContainer):
         Cluster,
         root_dir=ROOT_DIR,
         condor_server=config.condor_server.uri,
-        debug=config.log.debug.as_(bool)
+        raw_debug=config.log.debug
     )
 
     # Repositories
