@@ -68,6 +68,6 @@ class Cluster:
         minutes = 60
         sleep_period = 15 * minutes
         while True:
-            result = subprocess.run(f"{self.root_dir}/cronjobs/kerberos.sh", shell=True, capture_output=True)
+            result = subprocess.run(f"{self.root_dir}/../cronjobs/kerberos.sh", shell=True, capture_output=True)
             print(result.stdout.decode("utf-8"))
             await asyncio.sleep(sleep_period)
