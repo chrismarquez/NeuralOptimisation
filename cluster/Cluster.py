@@ -1,6 +1,5 @@
 import subprocess
 from asyncio import Queue, Future, Task
-from time import sleep
 
 import asyncio
 from typing import Awaitable, List, Mapping, Tuple, Optional
