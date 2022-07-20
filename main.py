@@ -26,7 +26,12 @@ class Container(containers.DeclarativeContainer):
 
     # Cluster
 
-    cluster = providers.Singleton(Cluster, root_dir=ROOT_DIR)
+    cluster = providers.Singleton(
+        Cluster,
+        root_dir=ROOT_DIR,
+        condor_server=config.condor_server.uri,
+        debug=config.log.debug
+    )
 
     # Repositories
 

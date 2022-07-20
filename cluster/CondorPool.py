@@ -16,6 +16,7 @@ CONDOR_PATH = "/usr/local/condor/release/bin"
 class CondorConfig:
     user: str
     job_type: JobType
+    debug: bool
 
 
 class CondorPool(WorkerPool):
@@ -45,7 +46,8 @@ class CondorPool(WorkerPool):
     async def _post_process(self, future: Future[str], condor_job_id: str):
         while True:
             status = await self.status(condor_job_id)
-            print(f"Job Status {condor_job_id}: {status}")
+            if self.config.debug:
+                print(f"Job Status {condor_job_id}: {status}")
             if status is None:
                 break
             await asyncio.sleep(3)

@@ -15,8 +15,9 @@ class SlurmPool(WorkerPool):
         raw_job_id = result.rstrip("\\n").split("Submitted batch job ")[-1]
         return int(raw_job_id)
 
-    def __init__(self, root_dir: str, capacity: int):
+    def __init__(self, root_dir: str, capacity: int, debug: bool):
         super().__init__(capacity, root_dir)
+        self.debug = debug
 
     async def submit(self, job: Job) -> Awaitable[str]:
         slurm_job_id = await self._submit(job)
@@ -29,7 +30,8 @@ class SlurmPool(WorkerPool):
     async def _post_process(self, future: Future[str], slurm_job_id: int):
         while True:
             status = await self.status(slurm_job_id)
-            print(f"Job Status {slurm_job_id}: {status}")
+            if self.debug:
+                print(f"Job Status {slurm_job_id}: {status}")
             if status.job_state == SlurmJobState.COMPLETED:
                 break
             await asyncio.sleep(3)

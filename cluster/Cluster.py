@@ -12,13 +12,13 @@ from cluster.WorkerPool import WorkerPool
 
 class Cluster:
 
-    def __init__(self, root_dir):
+    def __init__(self, root_dir, condor_server: str, debug: bool):
         self.root_dir = root_dir
 
         self.pools: List[WorkerPool] = [
-            SlurmPool(root_dir, capacity=2),
-            CondorPool(root_dir, capacity=8, condor_server="shell1.doc.ic.ac.uk", config=CondorConfig("csm21", "CPU")),
-            CondorPool(root_dir, capacity=10, condor_server="shell1.doc.ic.ac.uk", config=CondorConfig("csm21", "GPU"))
+            SlurmPool(root_dir, capacity=2, debug=debug),
+            CondorPool(root_dir, capacity=8, condor_server=condor_server, config=CondorConfig("csm21", "CPU", debug)),
+            CondorPool(root_dir, capacity=10, condor_server=condor_server, config=CondorConfig("csm21", "GPU", debug))
         ]
 
         self.consumers: List[Task] = []
