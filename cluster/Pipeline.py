@@ -117,8 +117,9 @@ class Pipeline:
             previous_completed = 0
             while True:
                 update = segment.job_completed - previous_completed
-                pbar.update(update)
-                previous_completed += update
+                if update > 0:
+                    pbar.update(update)
+                    previous_completed += update
                 if segment.expected_jobs == previous_completed:
                     break
                 await asyncio.sleep(1)
