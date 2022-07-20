@@ -13,9 +13,6 @@ from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
 
 
-# TODO: Put relevant Containers to dependency inject both jobs inside cluster and the main driver program
-
-
 class Container(containers.DeclarativeContainer):
     print("Initialising dependencies...")
 
@@ -30,7 +27,7 @@ class Container(containers.DeclarativeContainer):
         Cluster,
         root_dir=ROOT_DIR,
         condor_server=config.condor_server.uri,
-        debug=config.log.debug
+        debug=config.log.debug.as_(bool)
     )
 
     # Repositories
