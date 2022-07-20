@@ -9,6 +9,8 @@ class CondorJobState(Enum):
     R = "RUNNING"
     I = "IDLE"
     H = "HOLD"
+    X = "REMOVED"
+    S = "SUSPENDED"
 
 @dataclass
 class CondorJobStatus:
