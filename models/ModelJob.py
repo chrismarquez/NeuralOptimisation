@@ -41,7 +41,7 @@ class ModelJob(Job):
         if model_result is None:
             x_train, y_train = dataset.train
             x_test, y_test = dataset.test
-            estimator = Estimator(name=self.function_name, config=self.config, epochs=5)
+            estimator = Estimator(name=self.function_name, config=self.config, epochs=100)
             trainer = estimator.fit(x_train, y_train)
             neural_props = estimator.score(x_test, y_test)
             neural_model_id = self.save_model(trainer, neural_props)
