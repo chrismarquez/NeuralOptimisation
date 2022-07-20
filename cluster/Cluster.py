@@ -18,7 +18,7 @@ class Cluster:
         self.pools: List[WorkerPool] = [
             SlurmPool(root_dir, capacity=2, debug=debug),
             CondorPool(root_dir, capacity=8, condor_server=condor_server, config=CondorConfig("csm21", "CPU", debug)),
-            CondorPool(root_dir, capacity=10, condor_server=condor_server, config=CondorConfig("csm21", "GPU", debug))
+            CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig("csm21", "GPU", debug))
         ]
 
         self.consumers: List[Task] = []
