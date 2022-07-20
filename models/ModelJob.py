@@ -3,20 +3,21 @@ from typing import Optional
 from cluster.Job import Job, JobType
 from cluster.JobInit import init_job
 from data.Dataset import Dataset
+from experiments.Experiment import NeuralType
 from models.Estimator import Estimator
 from models.FNN import FNN
 from models.LoadableModule import LoadableModule
 from models.Trainer import Trainer
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
-from repositories.db_models import NeuralConfig, NeuralProperties, NeuralModel
+from repositories.db_models import FeedforwardNeuralConfig, NeuralProperties, NeuralModel, ConvolutionalNeuralConfig
 
 from cluster.JobContainer import JobContainer
 
 
 class ModelJob(Job):
 
-    def __init__(self, dataset_id: str, config: NeuralConfig, experiment_id: str):
+    def __init__(self, dataset_id: str, config: FeedforwardNeuralConfig, experiment_id: str):
         super().__init__(experiment_id)
         self.dataset_id = dataset_id
         self.config = config
@@ -40,34 +41,41 @@ class ModelJob(Job):
         if model_result is None:
             x_train, y_train = dataset.train
             x_test, y_test = dataset.test
-            estimator = Estimator(name=self.function_name, config=self.config, epochs=5)
+            estimator = Estimator(name=self.function_name, config=self.config, epochs=100)
             trainer = estimator.fit(x_train, y_train)
             neural_props = estimator.score(x_test, y_test)
             neural_model_id = self.save_model(trainer, neural_props)
         else:
             neural_model_id = model_result.id
-        print(f"NEURAL_MODEL_ID:{neural_model_id}")
+        print(f"NEURAL_MODEL_ID:{neural_model_id}", end="")
 
     def load(self) -> Optional[LoadableModule]:
-        existing_models = self.neural_repo.get_by_config(self.function_name, self.config)
+        existing_models = self.neural_repo.get_by_config(self.function_name, self.config, self.experiment_id)
         model = existing_models[0]
         return FNN(
             self.config.network_size, self.config.depth, self.config.activation_fn
         ).load_bytes(model.model_data)
 
     def search_existing(self) -> Optional[NeuralModel]:
-        existing_models = self.neural_repo.get_by_config(self.function_name, self.config)
+        existing_models = self.neural_repo.get_by_config(self.function_name, self.config, self.experiment_id)
         if len(existing_models) != 0:
             return existing_models[0]
         else:
             return None
 
     def save_model(self, trainer: Trainer, props: NeuralProperties) -> str:
+        if type(self.config) is FeedforwardNeuralConfig:
+            neural_type: NeuralType = "Feedforward"
+        elif type(self.config) is ConvolutionalNeuralConfig:
+            neural_type: NeuralType = "Convolutional"
+        else:
+            raise RuntimeError("Unrecognized Network Type")
         model = NeuralModel(
-            self.function_name,
-            self.config,
-            props,
-            trainer.get_model_data(),
+            function=self.function_name,
+            type=neural_type,
+            neural_config=self.config,
+            neural_properties=props,
+            model_data=trainer.get_model_data(),
             experiment_id=self.experiment_id
         )
         return self.neural_repo.save(model)

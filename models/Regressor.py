@@ -1,3 +1,5 @@
+import gc
+
 import numpy as np
 from sklearn import metrics
 import torch
@@ -19,6 +21,8 @@ class Regressor:
             return output.detach().cpu().numpy()
 
     def evaluate(self, x_test: torch.Tensor, y_target: torch.Tensor) -> (float, float):
+        gc.collect()
+        torch.cuda.empty_cache()  # Clean GPU memory before use
         y_predicted = self.predict(x_test)
         y_target = y_target.detach().cpu().numpy()
         error = metrics.mean_squared_error(y_target, y_predicted, squared=False)

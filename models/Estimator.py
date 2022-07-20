@@ -6,11 +6,12 @@ import numpy as np
 import torch
 from sklearn.base import BaseEstimator, RegressorMixin
 
+from models.CNN import CNN
 from models.FNN import FNN
 from models.LoadableModule import LoadableModule
 from models.Regressor import Regressor
 from models.Trainer import Trainer
-from repositories.db_models import NeuralConfig, NeuralProperties
+from repositories.db_models import FeedforwardNeuralConfig, NeuralProperties, NeuralConfig, ConvolutionalNeuralConfig
 
 LayerSize = int
 NetworkDepth = int
@@ -21,7 +22,7 @@ class Estimator(BaseEstimator, RegressorMixin):
     def __init__(
         self,
         name: str = "",
-        config: NeuralConfig = NeuralConfig(1E-3, 128, 138, 2, "ReLU"),
+        config: NeuralConfig = FeedforwardNeuralConfig(1E-3, 128, 138, 2, "ReLU"),
         epochs: int = 200
     ):
         self.name = name
@@ -34,15 +35,23 @@ class Estimator(BaseEstimator, RegressorMixin):
         return self
 
     def fit(self, x_train: np.ndarray, y_train: np.ndarray) -> Trainer:
-        learning_rate, batch_size, network_size, depth, activation_fn = self.config
-        net = FNN(nodes=network_size, depth=depth, activation=activation_fn)
+        net = self._build_net()
         trainable_params = net.count_parameters()
         params_class = round(trainable_params / 10_000.0) * 10
-        trainer = Trainer(net, lr=learning_rate, batch_size=batch_size)
-        details = f"Size [{network_size}] Depth [{depth}] Params [{trainable_params}]  Class[{params_class} k]  Activation [{activation_fn}] "
+        trainer = Trainer(net, lr=self.config.learning_rate, batch_size=self.config.batch_size)
+        details = f"Type [{type(self.config)}] Depth [{self.config.depth}] Params [{trainable_params}]  Class[{params_class} k]  Activation [{self.config.activation_fn}] "
         trainer.train(x_train, y_train, self.epochs, details=details)
         self.regressor = Regressor(net)
         return trainer
+
+    def _build_net(self) -> LoadableModule:
+        if type(self.config) is FeedforwardNeuralConfig:
+            _, _, network_size, depth, activation_fn = self.config
+            return FNN(nodes=network_size, depth=depth, activation=activation_fn)
+        elif type(self.config) is ConvolutionalNeuralConfig:
+            return CNN(start_size=self.config.start_size, filter_size=self.config.filter_size, filters=self.config.filters, depth=self.config.depth, activation=self.config.activation_fn)
+        else:
+            raise RuntimeError("Unrecognized Network Type")
 
     def predict(self, X):
         return self.regressor.predict(torch.tensor(X))
@@ -53,4 +62,4 @@ class Estimator(BaseEstimator, RegressorMixin):
 
 
 if __name__ == '__main__':
-    est = Estimator(name="ackley", config=NeuralConfig(1E-3, 128, 138, 2, "ReLU"))
+    est = Estimator(name="ackley", config=FeedforwardNeuralConfig(1E-3, 128, 138, 2, "ReLU"))

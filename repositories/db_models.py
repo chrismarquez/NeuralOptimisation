@@ -1,19 +1,22 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Union, Literal
 
 import numpy as np
 from bson import ObjectId
 
 from data.Dataset import Dataset
+from experiments.Experiment import NeuralType
 from models.FNN import Activation
 
 from dacite import from_dict
 
+
 # Bounds = Mapping[int, Tuple[float, float]]
+from optimisation.Solver import Solver
 
 
 @dataclass
@@ -43,7 +46,7 @@ class Bounds(DataModel):
 
 
 @dataclass
-class NeuralConfig(DataModel):
+class FeedforwardNeuralConfig(DataModel):
     learning_rate: float
     batch_size: int
     network_size: int
@@ -54,8 +57,29 @@ class NeuralConfig(DataModel):
         return iter((self.learning_rate, self.batch_size, self.network_size, self.depth, self.activation_fn))
 
     @staticmethod
-    def from_dict(document: Dict) -> NeuralConfig:
-        return from_dict(NeuralConfig, document)
+    def from_dict(document: Dict) -> FeedforwardNeuralConfig:
+        return from_dict(FeedforwardNeuralConfig, document)
+
+
+@dataclass
+class ConvolutionalNeuralConfig(DataModel):
+    learning_rate: float
+    batch_size: int
+    start_size: int
+    filters: int
+    filter_size: int
+    depth: int
+    activation_fn: Activation
+
+    def __iter__(self):
+        return iter((self.learning_rate, self.batch_size, self.filters, self.filter_size, self.depth, self.activation_fn))
+
+    @staticmethod
+    def from_dict(document: Dict) -> ConvolutionalNeuralConfig:
+        return from_dict(ConvolutionalNeuralConfig, document)
+
+
+NeuralConfig = Union[FeedforwardNeuralConfig, ConvolutionalNeuralConfig]
 
 
 @dataclass
@@ -73,6 +97,7 @@ class OptimisationProperties(DataModel):
     x: float
     y: float
     input_bounds: Bounds
+    solver_type: Solver
     location_error: float
     optimum_error: float
     computation_time: float
@@ -85,21 +110,32 @@ class OptimisationProperties(DataModel):
 @dataclass
 class NeuralModel(DataModel):
     function: str
+    type: NeuralType
     neural_config: NeuralConfig
     neural_properties: NeuralProperties
     model_data: bytes
-    optimisation_properties: Optional[OptimisationProperties] = None
+    optimisation_properties: List[OptimisationProperties] = field(default_factory=list)
     id: Optional[str] = None
     experiment_id: Optional[str] = None
 
     @staticmethod
+    def _get_neural_config(document: Dict) -> NeuralConfig:
+        if document["type"] == "Feedforward":
+            return FeedforwardNeuralConfig.from_dict(document["neural_config"])
+        elif document["type"] == "Convolutional":
+            return ConvolutionalNeuralConfig.from_dict(document["neural_config"])
+        else:
+            raise RuntimeError("Unknown Neural Config")
+
+    @staticmethod
     def from_dict(document: Dict) -> NeuralModel:
         opt_props = document.get("optimisation_properties", None)
-        opt_props = OptimisationProperties.from_dict(opt_props) if opt_props is not None else None
+        opt_props = [OptimisationProperties.from_dict(props) for props in opt_props] if opt_props is not None else []
         return NeuralModel(
             id=str(document["_id"]),
             function=document["function"],
-            neural_config=NeuralConfig.from_dict(document["neural_config"]),
+            type=document["type"],
+            neural_config=NeuralModel._get_neural_config(document),
             neural_properties=NeuralProperties.from_dict(document["neural_properties"]),
             optimisation_properties=opt_props,
             model_data=document["model_data"],

@@ -8,7 +8,7 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 from tqdm import tqdm
 
-from repositories.db_models import NeuralModel, NeuralProperties, OptimisationProperties, NeuralConfig, Bounds
+from repositories.db_models import NeuralModel, NeuralProperties, OptimisationProperties, FeedforwardNeuralConfig, Bounds
 
 
 class NeuralModelRepository:
@@ -30,10 +30,11 @@ class NeuralModelRepository:
         id_list = self._collection.find(query).distinct("_id")
         return [str(model_id) for model_id in id_list]
 
-    def get_by_config(self, function: str, config: NeuralConfig) -> List[NeuralModel]:
+    def get_by_config(self, function: str, config: FeedforwardNeuralConfig, exp_id: str) -> List[NeuralModel]:
         query = {
             "function": function,
-            "neural_config": config.to_dict()
+            "neural_config": config.to_dict(),
+            "experiment_id": exp_id
         }
         documents = self._collection.find(query)
         return [NeuralModel.from_dict(document) for document in documents]
@@ -64,7 +65,7 @@ if __name__ == '__main__':
         df = Plot.load_data(function)
         for id, row in tqdm(df.iterrows(), total=df.shape[0], colour="orange"):
             learning_rate, batch_size, network_size, depth, activation_fn, rmse, r2, x, y, location_error, optimum_error, computation_time = row
-            neural_config = NeuralConfig(learning_rate, batch_size, network_size, depth, activation_fn)
+            neural_config = FeedforwardNeuralConfig(learning_rate, batch_size, network_size, depth, activation_fn)
             neural_props = NeuralProperties(rmse, r2)
             optimisation_props = OptimisationProperties(x, y, input_bounds, location_error, optimum_error, computation_time)
             model_file = open(f"../../resources/trained/{function}/{id}.pt", "rb")

@@ -15,8 +15,9 @@ class SlurmPool(WorkerPool):
         raw_job_id = result.rstrip("\\n").split("Submitted batch job ")[-1]
         return int(raw_job_id)
 
-    def __init__(self, root_dir: str, capacity: int):
+    def __init__(self, root_dir: str, capacity: int, debug: bool):
         super().__init__(capacity, root_dir)
+        self.debug = debug
 
     async def submit(self, job: Job) -> Awaitable[str]:
         slurm_job_id = await self._submit(job)
@@ -29,7 +30,8 @@ class SlurmPool(WorkerPool):
     async def _post_process(self, future: Future[str], slurm_job_id: int):
         while True:
             status = await self.status(slurm_job_id)
-            print(f"Job Status {slurm_job_id}: {status}")
+            if self.debug:
+                print(f"Job Status {slurm_job_id}: {status}")
             if status.job_state == SlurmJobState.COMPLETED:
                 break
             await asyncio.sleep(3)
@@ -42,7 +44,7 @@ class SlurmPool(WorkerPool):
 
     async def _submit(self, job: Job) -> int:
         await self._request_slot()
-        script = self._to_runnable_script(job)
+        script = self._runnable_script_from(job)
         sbatch = f"sbatch {script}"
         try:
             result = subprocess.run(sbatch, shell=True, capture_output=True)
@@ -65,9 +67,5 @@ class SlurmPool(WorkerPool):
         file = f"{self.root_dir}/slurm20-{job_id}.out"
         with open(file) as f:
             return f.readlines()
-
-    @staticmethod
-    def find_model_id(lines: List[str]) -> str:
-        return lines[-1].split("NEURAL_MODEL_ID:")[-1]
 
 
