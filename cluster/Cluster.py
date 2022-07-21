@@ -4,6 +4,8 @@ from asyncio import Queue, Future, Task
 import asyncio
 from typing import Awaitable, List, Mapping, Tuple, Optional
 
+import paramiko
+
 from cluster.CondorPool import CondorPool, CondorConfig
 from cluster.Job import Job, JobType
 from cluster.SlurmPool import SlurmPool
@@ -13,13 +15,18 @@ from cluster.WorkerPool import WorkerPool
 class Cluster:
 
     def __init__(self, root_dir, condor_server: str, raw_debug: str):
+        user = "csm21"
         self.root_dir = root_dir
         debug = raw_debug == "True"
         self.pools: List[WorkerPool] = [
             SlurmPool(root_dir, capacity=2, debug=debug),
-            CondorPool(root_dir, capacity=8, condor_server=condor_server, config=CondorConfig("csm21", "CPU", debug)),
-            CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig("csm21", "GPU", debug))
+            CondorPool(root_dir, capacity=8, condor_server=condor_server, config=CondorConfig(user, "CPU", debug)),
+            CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig(user, "GPU", debug))
         ]
+
+        self.ssh_client = paramiko.SSHClient()
+        self.ssh_client.load_system_host_keys()
+        self.ssh_client.connect(condor_server, username=user)
 
         self.consumers: List[Task] = []
         self.kerberos_request: Optional[Task] = None
@@ -68,6 +75,8 @@ class Cluster:
         minutes = 60
         sleep_period = 15 * minutes
         while True:
-            result = subprocess.run(f"{self.root_dir}/../cronjobs/kerberos.sh", shell=True, capture_output=True)
-            print(result.stdout.decode("utf-8"))
+            command = f"{self.root_dir}/../cronjobs/kerberos.sh"
+            _, stdout, _ = self.ssh_client.exec_command(command)
+            result = stdout.read().decode("utf-8")
+            print(result)
             await asyncio.sleep(sleep_period)

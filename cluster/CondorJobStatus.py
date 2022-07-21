@@ -6,6 +6,7 @@ from typing import List
 
 
 class CondorJobState(Enum):
+    C = "COMPLETED"
     R = "RUNNING"
     I = "IDLE"
     H = "HOLD"
