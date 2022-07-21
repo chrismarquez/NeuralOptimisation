@@ -87,25 +87,29 @@ class CondorPool(WorkerPool):
         with open(file) as f:
             return f.readlines()
 
-    def get_condor_spec(self, script: str) -> str:
+    def get_condor_spec(self, script: str, job: Job) -> str:
         cmd = inspect.cleandoc(
             f"""
                 universe = vanilla
                 executable = {script}
                 output = {self.root_dir}/logs/condor/uname.$(ClusterId).out
                 error = {self.root_dir}/logs/condor/uname.$(ClusterId).err
-                Requirements = {self._get_node_req()}
+                Requirements = {self._get_node_req(job)}
                 log = uname.log
                 queue
             """
         )
         return self._write_script_file(cmd, suffix=".cmd")
 
-    def _get_node_req(self):
+    def _get_node_req(self, job: Job):
         if self.config.job_type == "GPU":
             return """regexp("^(gpu)[0-9][0-9]", TARGET.Machine) == True"""
-        elif self.config.job_type == "CPU":
-            return """regexp("^(ray)0[1-8]", TARGET.Machine) == True"""
+        elif self.config.job_type == "CPU" and job.requires_gurobi_license():
+            return """regexp("^(((ray|texel)0[1-8])|((vertex)0[1-2]))", TARGET.Machine) == True"""
+        else:
+            return """regexp("^(ray|texel|vertex)[0-9][0-9]", TARGET.Machine) == True"""
+
+
 
     def test(self):
         _, stdout, _ = self.ssh_client.exec_command(f"{CONDOR_PATH}/condor_submit {self.root_dir}/test.job")

@@ -1,4 +1,3 @@
-import subprocess
 from asyncio import Queue, Future, Task
 
 import asyncio
@@ -20,7 +19,7 @@ class Cluster:
         debug = raw_debug == "True"
         self.pools: List[WorkerPool] = [
             SlurmPool(root_dir, capacity=2, debug=debug),
-            CondorPool(root_dir, capacity=8, condor_server=condor_server, config=CondorConfig(user, "CPU", debug)),
+            CondorPool(root_dir, capacity=40, condor_server=condor_server, config=CondorConfig(user, "CPU", debug)),
             CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig(user, "GPU", debug))
         ]
 

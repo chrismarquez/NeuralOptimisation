@@ -45,6 +45,9 @@ class OptimisationJob(Job):
     def get_job_type(self) -> JobType:
         return "CPU"
 
+    def requires_gurobi_license(self) -> bool:
+        return self.solver_type == "gurobi"
+
 
 if __name__ == '__main__':
     init_job("OptimisationJob")

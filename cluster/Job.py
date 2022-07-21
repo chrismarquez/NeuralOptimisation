@@ -37,3 +37,6 @@ class Job(ABC):
     @staticmethod
     def decode(encoded_job: str) -> Job:
         return pickle.loads(base64.b64decode(encoded_job.encode()))
+
+    def requires_gurobi_license(self) -> bool:
+        return False
