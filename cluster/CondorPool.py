@@ -4,10 +4,11 @@ from asyncio import Future
 from dataclasses import dataclass
 from typing import List, Awaitable, Optional
 
+import paramiko
+
 from cluster.CondorJobStatus import CondorJobStatus
 from cluster.Job import JobType, Job
 from cluster.WorkerPool import WorkerPool
-import paramiko
 
 CONDOR_PATH = "/usr/local/condor/release/bin"
 
@@ -61,7 +62,7 @@ class CondorPool(WorkerPool):
     async def _submit(self, job: Job) -> str:
         await self._request_slot()
         script = self._runnable_script_from(job)
-        condor_spec = self.get_condor_spec(script)
+        condor_spec = self.get_condor_spec(script, job)
         condor_submit = f"{CONDOR_PATH}/condor_submit {condor_spec}"
         try:
             _, stdout, _ = self.ssh_client.exec_command(condor_submit)
@@ -120,6 +121,6 @@ class CondorPool(WorkerPool):
 
 
 if __name__ == '__main__':
-    config = CondorConfig("csm21", "CPU")
+    config = CondorConfig("csm21", "CPU", True)
     pool = CondorPool("/vol/bitbucket/csm21/NeuralOptimisation", 2, "shell1.doc.ic.ac.uk", config)
 
