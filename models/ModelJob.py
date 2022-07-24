@@ -3,7 +3,8 @@ from time import sleep
 from typing import Optional
 
 from cluster.Job import Job, JobType
-from cluster.JobInit import init_job
+from cluster.JobContainer import JobContainer
+from cluster.JobInit import init_container
 from data.Dataset import Dataset
 from experiments.Experiment import NeuralType
 from models.Estimator import Estimator
@@ -12,14 +13,13 @@ from models.LoadableModule import LoadableModule
 from models.Trainer import Trainer
 from repositories.NeuralModelRepository import NeuralModelRepository
 from repositories.SampleDatasetRepository import SampleDatasetRepository
-from repositories.db_models import FeedforwardNeuralConfig, NeuralProperties, NeuralModel, ConvolutionalNeuralConfig
-
-from cluster.JobContainer import JobContainer
+from repositories.db_models import FeedforwardNeuralConfig, NeuralProperties, NeuralModel, ConvolutionalNeuralConfig, \
+    NeuralConfig
 
 
 class ModelJob(Job):
 
-    def __init__(self, dataset_id: str, config: FeedforwardNeuralConfig, experiment_id: str):
+    def __init__(self, dataset_id: str, config: NeuralConfig, experiment_id: str):
         super().__init__(experiment_id)
         self.dataset_id = dataset_id
         self.config = config
@@ -92,4 +92,10 @@ class ModelJob(Job):
 
 
 if __name__ == '__main__':  # Prepare this to be used as job trigger-
-    init_job("ModelJob")
+    repo = SampleDatasetRepository(uri="mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
+    dataset_id = repo.get_all_dataset_id()[0]
+    config = FeedforwardNeuralConfig(1E7, 128, 420, 2, "ReLU")
+    job = ModelJob(dataset_id, config, "neural-test")
+    container = init_container()
+    job.run(container)
+    #init_job("ModelJob")
