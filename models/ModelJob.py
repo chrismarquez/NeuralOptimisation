@@ -43,7 +43,7 @@ class ModelJob(Job):
         if model_result is None:
             x_train, y_train = dataset.train
             x_test, y_test = dataset.test
-            estimator = Estimator(name=self.function_name, config=self.config, epochs=100)
+            estimator = Estimator(name=self.function_name, config=self.config, epochs=200)
             trainer = estimator.fit(x_train, y_train)
             neural_props = estimator.score(x_test, y_test)
             neural_model_id = self.save_model(trainer, neural_props)
@@ -92,9 +92,10 @@ class ModelJob(Job):
 
 
 if __name__ == '__main__':  # Prepare this to be used as job trigger-
-    repo = SampleDatasetRepository(uri="mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
+    # mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017
+    repo = SampleDatasetRepository(uri="mongodb://localhost:27017")
     dataset_id = repo.get_all_dataset_id()[0]
-    config = FeedforwardNeuralConfig(1E7, 128, 420, 2, "ReLU")
+    config = FeedforwardNeuralConfig(1E-7, 128, 420, 2, "ReLU")
     job = ModelJob(dataset_id, config, "neural-test")
     container = init_container()
     job.run(container)
