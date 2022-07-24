@@ -96,7 +96,7 @@ if __name__ == '__main__':  # Prepare this to be used as job trigger-
     container = init_container()
     repo = SampleDatasetRepository(uri=container.config.database.uri())
     dataset_id = repo.get_all_dataset_id()[0]
-    config = FeedforwardNeuralConfig(1E-7, 128, 420, 2, "ReLU")
+    config = FeedforwardNeuralConfig(1E-6, 128, 420, 2, "ReLU")
     job = ModelJob(dataset_id, config, "neural-test")
     job.run(container)
     #init_job("ModelJob")
