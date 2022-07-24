@@ -32,9 +32,11 @@ class CondorPool(WorkerPool):
         self.config = config
         self.condor_server = condor_server
 
+        print(f"[CondorPool] [{self.job_type()}] Connecting to Shell Server.")
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
         self.ssh_client.connect(self.condor_server, username=config.user)
+        print("Connected.")
 
     async def submit(self, job: Job) -> Awaitable[bool]:
         condor_job_id = await self._submit(job)

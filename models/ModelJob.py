@@ -30,7 +30,7 @@ class ModelJob(Job):
         self.sample_repo = container.sample_repository()
         model = self.neural_repo.get(self.model_id)
 
-        if model.neural_config is not None:
+        if model.neural_properties is not None:
             raise UnnecessaryJobException()
 
         dataset_id = self.sample_repo.get_id_by_name(model.function)
@@ -41,7 +41,8 @@ class ModelJob(Job):
         dataset = self._pre_run(container)
         x_train, y_train = dataset.train
         x_test, y_test = dataset.test
-        estimator = Estimator(name=self.function_name, config=self.config, epochs=5)
+        epochs = int(container.config.training.epochs())
+        estimator = Estimator(name=self.function_name, config=self.config, epochs=epochs)
         trainer = estimator.fit(x_train, y_train)
         neural_props = estimator.score(x_test, y_test)
         self.save_neural_props(trainer, neural_props)

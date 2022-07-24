@@ -22,9 +22,12 @@ class Cluster:
             CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig(user, "GPU", debug))
         ]
 
+        print("[Cluster] Connecting to Shell Server.")
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
         self.ssh_client.connect(condor_server, username=user)
+        print("Connected.")
+
 
         self.consumers: List[Task] = []
         self.kerberos_request: Optional[Task] = None
