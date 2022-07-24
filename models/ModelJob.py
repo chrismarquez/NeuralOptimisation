@@ -93,10 +93,10 @@ class ModelJob(Job):
 
 if __name__ == '__main__':  # Prepare this to be used as job trigger-
     # mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017
-    repo = SampleDatasetRepository(uri="mongodb://localhost:27017")
+    container = init_container()
+    repo = SampleDatasetRepository(uri=container.config.database.uri())
     dataset_id = repo.get_all_dataset_id()[0]
     config = FeedforwardNeuralConfig(1E-7, 128, 420, 2, "ReLU")
     job = ModelJob(dataset_id, config, "neural-test")
-    container = init_container()
     job.run(container)
     #init_job("ModelJob")
