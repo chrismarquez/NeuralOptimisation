@@ -12,12 +12,15 @@ def main(encoded_job: str, container: JobContainer = Provide[JobContainer]):
     job.run(container)
 
 
-def init_job(job_type: str):
-
+def init_container() -> JobContainer:
     container = JobContainer()
     container.init_resources()
     container.wire(modules=[__name__])
+    return container
 
+
+def init_job(job_type: str):
+    init_container()
     parser = argparse.ArgumentParser(description='Runnable job task')
     parser.add_argument(
         '--job',

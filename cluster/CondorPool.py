@@ -6,7 +6,7 @@ from typing import List, Awaitable, Optional
 
 import paramiko
 
-from cluster.CondorJobStatus import CondorJobStatus
+from cluster.CondorJobStatus import CondorJobStatus, CondorJobState
 from cluster.Job import JobType, Job
 from cluster.WorkerPool import WorkerPool
 
@@ -36,7 +36,7 @@ class CondorPool(WorkerPool):
         self.ssh_client.load_system_host_keys()
         self.ssh_client.connect(self.condor_server, username=config.user)
 
-    async def submit(self, job: Job) -> Awaitable[str]:
+    async def submit(self, job: Job) -> Awaitable[bool]:
         condor_job_id = await self._submit(job)
         loop = asyncio.get_running_loop()
         future = loop.create_future()
@@ -44,7 +44,7 @@ class CondorPool(WorkerPool):
         asyncio.create_task(task)
         return future
 
-    async def _post_process(self, future: Future[str], condor_job_id: str):
+    async def _post_process(self, future: Future[bool], condor_job_id: str):
         while True:
             status = await self.status(condor_job_id)
             if self.config.debug:
@@ -52,12 +52,8 @@ class CondorPool(WorkerPool):
             if status is None:
                 break
             await asyncio.sleep(3)
-        if self.job_type() == "GPU":
-            lines = self.get_job_output(condor_job_id)
-            model_id = CondorPool.find_model_id(lines)
-            future.set_result(model_id)
-        else:
-            future.set_result(str(condor_job_id))
+        print(f"Job Status {condor_job_id}: {CondorJobState.C}")
+        future.set_result(True)
 
     async def _submit(self, job: Job) -> str:
         await self._request_slot()

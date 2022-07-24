@@ -14,10 +14,9 @@ from repositories.SampleDatasetRepository import SampleDatasetRepository
 
 
 class Container(containers.DeclarativeContainer):
-    print("Initialising dependencies...")
-
     env = get_env()
     config_file = get_config(env)
+    print(f"Environment: {env}. Using config file: {config_file}")
     path = f"resources/{config_file}"
     config = providers.Configuration(ini_files=[path])
 
@@ -44,22 +43,24 @@ class Container(containers.DeclarativeContainer):
         sample_repo=sample_repository
     )
 
-    print("Dependencies ready.")
+
+def init_container() -> Container:
+    container = Container()
+    container.init_resources()
+    container.wire(modules=[__name__])
+    return container
 
 
 @inject
 async def main(experiment: Experiment, test_run: bool, container: Container = Provide[Container]):
+    print("Initialising Executor.")
     executor = container.experiment_executor()
-    await executor.run_experiment(experiment, test_run=test_run)
+    print("Executor Ready.")
+    await executor.run_experiment(experiment, test_run=test_run, use_cluster=False)
 
 
 if __name__ == '__main__':
-    print("Loading Container...")
-    container = Container()
-    container.init_resources()
-    container.wire(modules=[__name__])
-    print("Container ready.")
-
+    container = init_container()
     parser = argparse.ArgumentParser(description='Neural Optimisation Experiment Runner')
 
     parser.add_argument(

@@ -1,6 +1,5 @@
-from asyncio import Queue, Future, Task
-
 import asyncio
+from asyncio import Queue, Future, Task
 from typing import Awaitable, List, Mapping, Tuple, Optional
 
 import paramiko
@@ -30,13 +29,13 @@ class Cluster:
         self.consumers: List[Task] = []
         self.kerberos_request: Optional[Task] = None
 
-        self.type_queues: Mapping[JobType, Queue[Tuple[Future[str], Job]]] = {
+        self.type_queues: Mapping[JobType, Queue[Tuple[Future[bool], Job]]] = {
             "CPU": Queue(),
             "GPU": Queue()
         }
 
     # Coroutine launch method
-    async def submit(self, job: Job) -> Awaitable[str]:
+    async def submit(self, job: Job) -> Awaitable[bool]:
         job_type = job.get_job_type()
         loop = asyncio.get_running_loop()
         future = loop.create_future()
