@@ -21,7 +21,7 @@ class OptimisationJob(Job):
         if self.optimisation_exists(neural_model):
             raise UnnecessaryJobException()
         optimiser = Optimiser.load_from_model(neural_model, self.input_bounds, self.solver_type)
-        _, _, nodes, depth, _ = neural_model.neural_config
+        _, _, nodes, depth, _ = neural_model.neural_config  # TODO: Prepare for CNN
         print(f"Size [{nodes}] Depth [{depth}]")
         x_opt, y_opt, z_opt = optimiser.solve()
         location_error = metrics.mean_squared_error([0.0, 0.0], [x_opt, y_opt], squared=False)

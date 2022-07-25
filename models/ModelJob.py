@@ -20,12 +20,10 @@ class ModelJob(Job):
 
         self.config = config
 
-        self.function_name: Optional[str] = None
         self.sample_repo: Optional[SampleDatasetRepository] = None
         self.neural_repo: Optional[NeuralModelRepository] = None
-        self.experiment_id:  Optional[str] = None
 
-    def _pre_run(self, container: JobContainer) -> Dataset:
+    def _pre_run(self, container: JobContainer) -> (Dataset, NeuralModel):
         self.neural_repo = container.neural_repository()
         self.sample_repo = container.sample_repository()
         model = self.neural_repo.get(self.model_id)
@@ -35,14 +33,14 @@ class ModelJob(Job):
 
         dataset_id = self.sample_repo.get_id_by_name(model.function)
         sample_dataset = self.sample_repo.get(dataset_id)
-        return sample_dataset.to_dataset()
+        return sample_dataset.to_dataset(), model
 
     def _run(self, container: JobContainer):
-        dataset = self._pre_run(container)
+        dataset, model = self._pre_run(container)
         x_train, y_train = dataset.train
         x_test, y_test = dataset.test
         epochs = int(container.config.training.epochs())
-        estimator = Estimator(name=self.function_name, config=self.config, epochs=epochs)
+        estimator = Estimator(name=model.function, config=self.config, epochs=epochs)
         trainer = estimator.fit(x_train, y_train)
         neural_props = estimator.score(x_test, y_test)
         self.save_neural_props(trainer, neural_props)
@@ -50,16 +48,9 @@ class ModelJob(Job):
         sys.stdout.flush()
         sleep(0.5)
 
-    def save_neural_props(self, trainer: Trainer, props: NeuralProperties):
-        model = NeuralModel(
-            id=self.model_id,
-            function=self.function_name,
-            type=self.config.get_neural_type(),
-            neural_config=self.config,
-            neural_properties=props,
-            model_data=trainer.get_model_data(),
-            experiment_id=self.experiment_id
-        )
+    def save_neural_props(self, model: NeuralModel, trainer: Trainer, props: NeuralProperties):
+        model.neural_properties = props
+        model.model_data = trainer.get_model_data()
         self.neural_repo.update(model)
 
     def as_command(self) -> str:
