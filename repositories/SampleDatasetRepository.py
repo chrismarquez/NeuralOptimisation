@@ -30,6 +30,14 @@ class SampleDatasetRepository:
         document = document | samples
         return SampleDataset.from_dict(document)
 
+    def get_name_by_id(self, id: str) -> str:
+        query = {"_id": ObjectId(id)}
+        document = self._root_collection.find_one(query)
+        if document is not None:
+            return str(document["function"])
+        else:
+            raise RuntimeError(f"Name for ID {id} not found")
+
     def get_id_by_name(self, function_name: str) -> str:
         query = {"function": function_name}
         document = self._root_collection.find_one(query)

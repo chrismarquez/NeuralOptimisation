@@ -103,10 +103,9 @@ class ExperimentExecutor:
         hyper_params = exp.get_hyper_params()
         searcher = GridSearch()
         jobs = []
+        config_pool = searcher.get_sequence(hyper_params, exp.type)
         for dataset_id in self._sample_repo.get_all_dataset_id():
-            config_pool = searcher.get_sequence(hyper_params, exp.type)
-            sample_dataset = self._sample_repo.get(dataset_id)
-            function_name = sample_dataset.function
+            function_name = self._sample_repo.get_name_by_id(dataset_id)
             model_list = [
                 NeuralModel(
                     function=function_name,
