@@ -15,11 +15,11 @@ from repositories.db_models import NeuralProperties, NeuralModel, NeuralConfig
 
 class ModelJob(Job):
 
-    def __init__(self, model_id: str, config: NeuralConfig):
+    def __init__(self, model_id: str, config: NeuralConfig, epochs: int):
         super().__init__(model_id)
 
         self.config = config
-
+        self.epochs = epochs
         self.sample_repo: Optional[SampleDatasetRepository] = None
         self.neural_repo: Optional[NeuralModelRepository] = None
 
@@ -39,11 +39,10 @@ class ModelJob(Job):
         dataset, model = self._pre_run(container)
         x_train, y_train = dataset.train
         x_test, y_test = dataset.test
-        epochs = int(container.config.training.epochs())
-        estimator = Estimator(name=model.function, config=self.config, epochs=epochs)
+        estimator = Estimator(name=model.function, config=self.config, epochs=self.epochs)
         trainer = estimator.fit(x_train, y_train)
         neural_props = estimator.score(x_test, y_test)
-        self.save_neural_props(trainer, neural_props)
+        self.save_neural_props(model, trainer, neural_props)
         print(f"NEURAL_MODEL_ID:{self.model_id}", end="")
         sys.stdout.flush()
         sleep(0.5)

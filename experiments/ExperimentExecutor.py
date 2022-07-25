@@ -97,7 +97,7 @@ class ExperimentExecutor:
         trained_models = self._neural_repo.count_models_to_train(experiment.exp_id)
         to_train = total_models - trained_models
         print(f"{trained_models} / {total_models} already trained. {to_train} models remain to be trained.")
-        return [ModelJob(model.id, model.neural_config) for model in neural_models]
+        return [ModelJob(model.id, model.neural_config, experiment.epochs) for model in neural_models]
 
     def _init_experiment(self, exp: Experiment) -> List[ModelJob]:
         hyper_params = exp.get_hyper_params()
@@ -118,6 +118,6 @@ class ExperimentExecutor:
                 models.set_description(f"Creating Experiment {exp.exp_id} models for function {function_name}")
                 for model in models:
                     model_id = self._neural_repo.save(model)
-                    job = ModelJob(model_id, model.neural_config)
+                    job = ModelJob(model_id, model.neural_config, exp.epochs)
                     jobs.append(job)
         return jobs

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from bson import ObjectId
 from pymongo import MongoClient
@@ -21,7 +21,9 @@ class NeuralModelRepository:
         self._collection: Collection = self._db.NeuralModel
 
     def get(self, id: str) -> NeuralModel:
-        document = self._collection.find_one({"_id": ObjectId(id)})
+        document: Optional[Dict] = self._collection.find_one({"_id": ObjectId(id)})
+        if document is None:
+            raise RuntimeError(f"Document with ID {id} not found")
         return NeuralModel.from_dict(document)
 
     def get_all_id(self, function: str = None, non_optimised: bool = False):

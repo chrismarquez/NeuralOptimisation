@@ -17,7 +17,7 @@ def _get_fnn_hyper_params():
         "learning_rate": [1E-6, 3E-7],
         "batch_size": [128, 512],
         "network_shape": sizes_2 + sizes_4,
-        "activation_fn": ["ReLU", "Sigmoid", "Tanh", "Softplus"],
+        "activation_fn": ["ReLU", "Sigmoid"],
     }
 
 
