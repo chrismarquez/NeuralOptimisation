@@ -52,11 +52,11 @@ def init_container() -> Container:
 
 
 @inject
-async def main(experiment: Experiment, test_run: bool, container: Container = Provide[Container]):
+async def main(experiment: Experiment, test_run: bool, use_cluster: bool, container: Container = Provide[Container]):
     print("Initialising Executor.")
     executor = container.experiment_executor()
     print("Executor Ready.")
-    await executor.run_experiment(experiment, test_run=test_run, use_cluster=False)
+    await executor.run_experiment(experiment, test_run=test_run, use_cluster=use_cluster)
 
 
 if __name__ == '__main__':
@@ -79,13 +79,28 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
+        '--epochs',
+        type=int,
+        required=True,
+        help=f"Number of Epochs for Experiment Training"
+    )
+
+    parser.add_argument(
         '--test',
         action="store_true",
         help=f"Run only a few examples to perform a quick test"
     )
 
+    parser.add_argument(
+        '--local',
+        action="store_true",
+        help=f"Run examples locally with the underlying hardware instead of using the institutional cluster"
+    )
+
     args = parser.parse_args()
 
-    experiment = Experiment(args.experiment, cast(NeuralType, args.type))
+    experiment = Experiment(args.experiment, cast(NeuralType, args.type), args.epochs)
 
-    asyncio.run(main(experiment, args.test))
+    use_cluster = not args.local
+
+    asyncio.run(main(experiment, args.test, use_cluster))

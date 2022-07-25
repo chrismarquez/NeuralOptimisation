@@ -36,6 +36,7 @@ def _get_cnn_hyper_params():
 class Experiment:
     exp_id: str
     type: NeuralType
+    epochs: int
 
     def get_hyper_params(self) -> Dict:
         if self.type == "Feedforward":
