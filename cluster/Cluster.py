@@ -79,7 +79,8 @@ class Cluster:
 
     async def _request_kerberos_ticket(self):
         minutes = 60
-        sleep_period = 15 * minutes
+        hours = 60 * minutes
+        sleep_period = 4 * hours
         while True:
             command = f"{self.root_dir}/../cronjobs/kerberos.sh"
             _, stdout, _ = self.ssh_client.exec_command(command)
