@@ -51,8 +51,10 @@ class SlurmPool(WorkerPool):
             result = subprocess.run(sbatch, shell=True, capture_output=True)
             output = result.stdout.decode("utf-8")
             return SlurmPool._parse_job_id(output)
-        except ValueError:
+        except ValueError as err:
             await self._release_slot()
+            if self.debug:
+                print(err)
             raise RuntimeError(f"Task creation error for job {job.uuid}")
 
     async def status(self, job_id: int) -> SlurmJobStatus:

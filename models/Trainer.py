@@ -6,10 +6,10 @@ from typing import List, Tuple
 
 import numpy as np
 import torch
-from tqdm.auto import trange
 from torch import nn, optim
+from tqdm.auto import trange
 
-from data.Dataset import Dataset
+from cluster.JobInit import init_container
 from models.FNN import FNN
 
 Batch = Tuple[torch.Tensor, torch.Tensor]
@@ -87,9 +87,9 @@ class Trainer:
 
 
 if __name__ == '__main__':
-    trainer = Trainer(FNN(10, 2, "ReLU"))
-    raw_dataset = np.loadtxt(f"samples/sum_squares.csv", delimiter=",")
-    dataset = Dataset.create(raw_dataset)
+    trainer = Trainer(FNN(420, 2, "Sigmoid"))
+    container = init_container()
+    sample_repo = container.sample_repository()
+    dataset = sample_repo.get("62dcc587ce0f41019d2d7d78").to_dataset()
     x_train, y_train = dataset.train
-    trained_net = trainer.train(x_train, y_train, epochs=400)
-    trainer.save("test", "sum_squares")
+    trained_net = trainer.train(x_train, y_train, epochs=500)

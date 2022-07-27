@@ -15,11 +15,11 @@ class Cluster:
     def __init__(self, root_dir, condor_server: str, raw_debug: str):
         user = "csm21"
         self.root_dir = root_dir
-        debug = raw_debug == "True"
+        self.debug = raw_debug == "True"
         self.pools: List[WorkerPool] = [
-            SlurmPool(root_dir, capacity=2, debug=debug),
-            CondorPool(root_dir, capacity=40, condor_server=condor_server, config=CondorConfig(user, "CPU", debug)),
-            CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig(user, "GPU", debug))
+            SlurmPool(root_dir, capacity=2, debug=self.debug),
+            CondorPool(root_dir, capacity=40, condor_server=condor_server, config=CondorConfig(user, "CPU", self.debug)),
+            CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig(user, "GPU", self.debug))
         ]
 
         print("[Cluster] Connecting to Shell Server.")
@@ -66,6 +66,12 @@ class Cluster:
                 asyncio.create_task(task)
             except RuntimeError as e:
                 future.set_exception(e)
+                if self.debug:
+                    print(f"Failed Job {job.uuid} with model {job.model_id}. Adding to queue again")
+                job_type = job.get_job_type()
+                await self.type_queues[job_type].put((future, job))
+
+
 
     async def _on_complete(self, future: Future, pool_future: Awaitable):
         result = await pool_future

@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from sklearn.base import BaseEstimator, RegressorMixin
 
+from cluster.JobInit import init_container
 from models.CNN import CNN
 from models.FNN import FNN
 from models.LoadableModule import LoadableModule
@@ -62,4 +63,14 @@ class Estimator(BaseEstimator, RegressorMixin):
 
 
 if __name__ == '__main__':
-    est = Estimator(name="ackley", config=FeedforwardNeuralConfig(1E-3, 128, 138, 2, "ReLU"))
+    est = Estimator(name="ackley", config=FeedforwardNeuralConfig(1E-6, 128, 420, 2, "Sigmoid"), epochs=500)
+    container = init_container()
+    sample_repo = container.sample_repository()
+    dataset = sample_repo.get("62dcc587ce0f41019d2d7d78").to_dataset()
+    x_train, y_train = dataset.train
+    x_test, y_test = dataset.test
+    trainer = est.fit(x_train, y_train)
+    neural_props = est.score(x_test, y_test)
+    print(neural_props)
+
+
