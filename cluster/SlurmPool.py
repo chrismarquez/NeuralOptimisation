@@ -29,11 +29,14 @@ class SlurmPool(WorkerPool):
 
     async def _post_process(self, future: Future[bool], slurm_job_id: int):
         while True:
-            status = await self.status(slurm_job_id)
-            if self.debug:
-                print(f"Job Status {slurm_job_id}: {status}")
-            if status.job_state == SlurmJobState.COMPLETED:
-                break
+            try:
+                status = await self.status(slurm_job_id)
+                if self.debug:
+                    print(f"Job Status {slurm_job_id}: {status}")
+                if status.job_state == SlurmJobState.COMPLETED:
+                    break
+            except KeyError:
+                pass
             await asyncio.sleep(3)
         future.set_result(True)
 

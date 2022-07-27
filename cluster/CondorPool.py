@@ -109,7 +109,6 @@ class CondorPool(WorkerPool):
             return """regexp("^(ray|texel|vertex)[0-9][0-9]", TARGET.Machine) == True"""
 
 
-
     def test(self):
         _, stdout, _ = self.ssh_client.exec_command(f"{CONDOR_PATH}/condor_submit {self.root_dir}/test.job")
         print(str(stdout.read()))

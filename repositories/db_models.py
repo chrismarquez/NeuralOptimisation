@@ -103,6 +103,7 @@ class OptimisationProperties(DataModel):
     location_error: float
     optimum_error: float
     computation_time: float
+    successful: bool
 
     @staticmethod
     def from_dict(document: Dict) -> OptimisationProperties:

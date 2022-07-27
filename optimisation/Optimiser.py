@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+from datetime import datetime
 from typing import Callable
 
 import pandas as pd
@@ -20,11 +21,21 @@ from models.LoadableModule import LoadableModule
 from optimisation.Solver import Solver
 from repositories.db_models import NeuralModel, Bounds, FeedforwardNeuralConfig, ConvolutionalNeuralConfig
 
+_MINUTE = 60.0
+_HOUR = 60.0 * _MINUTE
+
+
+class OptimisationException(Exception):
+
+    def __init__(self, computation_time: float):
+        self.computation_time = computation_time
+
 
 class Optimiser:
 
     def __init__(self, network_definition: NetworkDefinition, solver_type: Solver = "cbc"):
         self.solver_type = solver_type
+        self.timeout = 3 * _HOUR
 
         model = pyo.ConcreteModel()
         model.net = OmltBlock()
@@ -57,10 +68,16 @@ class Optimiser:
         self.optimisation_time = 0.0
 
     def solve(self):
-        options = {} if self.solver_type == "ipopt" else {"threads": 12}
-        results = self._solver.solve(self._model, tee=True, timelimit=0.1, options=options)
-        self.optimisation_time = self._get_optimisation_time(results)
-        return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
+        options = {} if self.solver_type == "ipopt" else {"threads": 8}
+        start_time = datetime.now()
+        try:
+            results = self._solver.solve(self._model, tee=True, timelimit=self.timeout, options=options)
+            self.optimisation_time = self._get_optimisation_time(results)
+            return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
+        except Exception:
+            end_time = datetime.now()
+            duration = end_time - start_time
+            raise OptimisationException(duration.total_seconds())
 
     @staticmethod
     def load_from_path(path: str, input_bounds: Bounds, solver_type: Solver,
