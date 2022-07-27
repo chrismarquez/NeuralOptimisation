@@ -28,7 +28,6 @@ class Cluster:
         self.ssh_client.connect(condor_server, username=user)
         print("Connected.")
 
-
         self.consumers: List[Task] = []
         self.kerberos_request: Optional[Task] = None
 
@@ -78,6 +77,5 @@ class Cluster:
         while True:
             command = f"{self.root_dir}/../cronjobs/kerberos.sh"
             _, stdout, _ = self.ssh_client.exec_command(command)
-            result = stdout.read().decode("utf-8")
-            print(result)
+            _ = stdout.read().decode("utf-8")
             await asyncio.sleep(sleep_period)

@@ -54,7 +54,8 @@ class CondorPool(WorkerPool):
             if status is None:
                 break
             await asyncio.sleep(3)
-        print(f"Job Status {condor_job_id}: {CondorJobState.C}")
+        if self.config.debug:
+            print(f"Job Status {condor_job_id}: {CondorJobState.C}")
         future.set_result(True)
 
     async def _submit(self, job: Job) -> str:
