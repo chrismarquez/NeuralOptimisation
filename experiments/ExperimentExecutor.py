@@ -94,8 +94,8 @@ class ExperimentExecutor:
             return self._init_experiment(experiment)
         neural_models = self._neural_repo.get_all(experiment.exp_id)
         total_models = len(neural_models)
-        trained_models = self._neural_repo.count_models_to_train(experiment.exp_id)
-        to_train = total_models - trained_models
+        to_train = self._neural_repo.count_models_to_train(experiment.exp_id)
+        trained_models = total_models - to_train
         print(f"{trained_models} / {total_models} already trained. {to_train} models remain to be trained.")
         return [ModelJob(model.id, model.neural_config, experiment.epochs) for model in neural_models]
 
