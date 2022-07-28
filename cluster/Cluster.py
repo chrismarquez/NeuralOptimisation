@@ -26,6 +26,8 @@ class Cluster:
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
         self.ssh_client.connect(condor_server, username=user)
+        transport = self.ssh_client.get_transport()
+        transport.set_keepalive(interval=300)
         print("Connected.")
 
         self.consumers: List[Task] = []
@@ -70,8 +72,6 @@ class Cluster:
                     print(f"Failed Job {job.uuid} with model {job.model_id}. Adding to queue again")
                 job_type = job.get_job_type()
                 await self.type_queues[job_type].put((future, job))
-
-
 
     async def _on_complete(self, future: Future, pool_future: Awaitable):
         result = await pool_future

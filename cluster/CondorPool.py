@@ -36,6 +36,8 @@ class CondorPool(WorkerPool):
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
         self.ssh_client.connect(self.condor_server, username=config.user)
+        transport = self.ssh_client.get_transport()
+        transport.set_keepalive(interval=300)
         print("Connected.")
 
     async def submit(self, job: Job) -> Awaitable[bool]:
@@ -107,7 +109,7 @@ class CondorPool(WorkerPool):
         elif self.config.job_type == "CPU" and job.requires_gurobi_license():
             return """regexp("^(((ray|texel)0[1-8])|((vertex)0[1-2]))", TARGET.Machine) == True"""
         else:
-            return """regexp("^(ray|texel|vertex)[0-9][0-9]", TARGET.Machine) == True"""
+            return """regexp("^(?=((ray|texel|vertex)[0-9][0-9]))(?!texel21)", TARGET.Machine) == True"""
 
     def test(self):
         _, stdout, _ = self.ssh_client.exec_command(f"{CONDOR_PATH}/condor_submit {self.root_dir}/test.job")
