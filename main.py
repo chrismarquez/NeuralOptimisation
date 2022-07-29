@@ -40,7 +40,8 @@ class Container(containers.DeclarativeContainer):
         ExperimentExecutor,
         cluster=cluster,
         neural_repo=neural_repository,
-        sample_repo=sample_repository
+        sample_repo=sample_repository,
+        raw_debug=config.log.debug
     )
 
 

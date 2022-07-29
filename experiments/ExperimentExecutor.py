@@ -25,10 +25,17 @@ class ExpectedJobs:
 
 class ExperimentExecutor:
 
-    def __init__(self, cluster: Cluster, neural_repo: NeuralModelRepository, sample_repo: SampleDatasetRepository):
+    def __init__(
+        self,
+        cluster: Cluster,
+        neural_repo: NeuralModelRepository,
+        sample_repo: SampleDatasetRepository,
+        raw_debug: str
+    ):
         self._cluster = cluster
         self._neural_repo = neural_repo
         self._sample_repo = sample_repo
+        self.debug = raw_debug == "True"
 
     async def run_experiment(
         self,
@@ -49,7 +56,7 @@ class ExperimentExecutor:
             ExperimentExecutor._run_locally(jobs)
 
     def _build_pipeline(self, expected_jobs: ExpectedJobs) -> Pipeline:
-        return Pipeline([
+        return Pipeline(debug=self.debug, segments=[
             Segment(
                 name="Neural Trainer",
                 capacity=50,

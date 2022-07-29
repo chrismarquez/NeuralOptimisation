@@ -35,6 +35,7 @@ class Segment:
         self.job_queue: Queue[T] = Queue(maxsize=capacity)
         self.submit = submit
         self.pipe = pipe
+        self.lock = asyncio.Lock()
         self.next_segment: Optional[Segment] = None
         self._consumer: Optional[Task] = None
 
@@ -51,7 +52,8 @@ class Segment:
     async def _pipe_and_mark(self, completed_job: Job, task: Task) -> List[Job]:
         try:
             jobs = await self.pipe(completed_job, task)
-            self.job_completed += 1
+            async with self.lock:
+                self.job_completed += 1
         except RuntimeError:
             print(f"Could not pipe task {task}")
             jobs = []
@@ -62,7 +64,7 @@ class Segment:
         while True:
             job = await self.job_queue.get()
             task = await self.submit(job)
-            await asyncio.sleep(0.3)
+            await asyncio.sleep(0.2)
             asyncio.create_task(self._post_process(job, task))
 
     async def _post_process(self, completed_job: Job, task: Task):
@@ -74,7 +76,8 @@ class Segment:
 
 class Pipeline:
 
-    def __init__(self, segments: Optional[List[Segment]] = None):
+    def __init__(self, debug: bool, segments: Optional[List[Segment]] = None,):
+        self.debug = debug
         if segments is None:
             segments = []
         self.job_batch_size: int = 0
@@ -104,6 +107,9 @@ class Pipeline:
         first_segment = self.segments[0]
         for job in jobs:
             await first_segment.enqueue(job)
+        if self.debug:
+            print("All jobs are enqueued in pipeline")
+
 
     def _spawn_reporters(self) -> List[Task]:
         return [
@@ -151,7 +157,7 @@ async def _mock_pipe(_: Job, task: Awaitable[None]) -> List[Job]:
 
 
 async def main():
-    pipeline = Pipeline([
+    pipeline = Pipeline(False, [
         Segment(name="Train", capacity=50, expected_jobs=50, submit=_mock_submit, pipe=_mock_pipe),
         Segment(name="Opt", capacity=50, expected_jobs=50, submit=_mock_submit)
     ])
