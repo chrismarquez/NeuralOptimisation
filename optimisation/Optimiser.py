@@ -72,7 +72,7 @@ class Optimiser:
         start_time = datetime.now()
         try:
             results = self._solve(options)
-            self.optimisation_time = self._get_optimisation_time(results)
+            self.optimisation_time = self._get_optimisation_time(results, start_time)
             return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
         except Exception:
             end_time = datetime.now()
@@ -122,7 +122,7 @@ class Optimiser:
 
         return Optimiser._load(net, input_bounds, solver_type)
 
-    def _get_optimisation_time(self, results) -> float:
+    def _get_optimisation_time(self, results, start_time) -> float:
         if self.solver_type == "cbc":
             return float(results['Solver'][0]['Wallclock time'])
         elif self.solver_type == "ipopt":
@@ -130,7 +130,9 @@ class Optimiser:
         elif self.solver_type == "gurobi":
             return float(results['Solver'][0]['Wall time'])
         elif self.solver_type == "mindtpy":
-            return float(results["Solver"][0]["wallclock_time"])
+            end_time = datetime.now()
+            duration = end_time - start_time
+            return duration.total_seconds()
         return -1.0
 
     @staticmethod
