@@ -166,12 +166,11 @@ class Optimiser:
 
 if __name__ == '__main__':
     from repositories.NeuralModelRepository import NeuralModelRepository
-
     [x_max] = [x_max for fn, x_max in functions.pool.items() if fn == functions.sum_squares]
     input_bounds: Bounds = Bounds(0.2)
     print(input_bounds)
     repo = NeuralModelRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
-    model = repo.get("62deef0727dc2b9bd660c62b")
-    optimiser = Optimiser.load_from_model(model, input_bounds, solver_type="gurobi")
+    model = repo.get("62e1a728517f400bb65f3ca2")
+    optimiser = Optimiser.load_from_model(model, input_bounds, solver_type="mindtpy")
     values = optimiser.solve()
     print(values)
