@@ -109,7 +109,7 @@ class ExperimentExecutor:
         trained_models = total_models - to_train
         print(f"{trained_models} / {total_models} already trained. {to_train} models remain to be trained.")
         incomplete_models = [model for model in neural_models if not model.is_complete()]
-        print(f"{len(incomplete_models)} / {total_models} are incomplete. {incomplete_models} models will be added to pipeline.")
+        print(f"{len(incomplete_models)} / {total_models} are incomplete. {len(incomplete_models)} models will be added to pipeline.")
         return incomplete_models
 
     def _init_experiment(self, exp: Experiment) -> List[ModelJob]:
