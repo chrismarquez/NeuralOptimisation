@@ -129,6 +129,8 @@ class Optimiser:
             return float(results['Solver'][0]['Time'])
         elif self.solver_type == "gurobi":
             return float(results['Solver'][0]['Wall time'])
+        elif self.solver_type == "mindtpy":
+            return float(results["Solver"][0]["wallclock_time"])
         return -1.0
 
     @staticmethod
