@@ -100,11 +100,17 @@ class ExperimentExecutor:
         if not experiment_exists:
             return self._init_experiment(experiment)
         neural_models = self._neural_repo.get_all(experiment.exp_id)
+        neural_models = self._calculate_execution(neural_models, experiment)
+        return [ModelJob(model.id, model.neural_config, experiment.epochs) for model in neural_models]
+
+    def _calculate_execution(self, neural_models: List[NeuralModel], experiment: Experiment) -> List[NeuralModel]:
         total_models = len(neural_models)
         to_train = self._neural_repo.count_models_to_train(experiment.exp_id)
         trained_models = total_models - to_train
         print(f"{trained_models} / {total_models} already trained. {to_train} models remain to be trained.")
-        return [ModelJob(model.id, model.neural_config, experiment.epochs) for model in neural_models]
+        incomplete_models = [model for model in neural_models if not model.is_complete()]
+        print(f"{len(incomplete_models)} / {total_models} are incomplete. {incomplete_models} models will be added to pipeline.")
+        return incomplete_models
 
     def _init_experiment(self, exp: Experiment) -> List[ModelJob]:
         hyper_params = exp.get_hyper_params()
@@ -118,6 +124,7 @@ class ExperimentExecutor:
                     function=function_name,
                     type=config.get_neural_type(),
                     neural_config=config,
+                    expected_optimisations=len(solvable_by(config.activation_fn)),
                     experiment_id=exp.exp_id
                 ) for config in config_pool
             ]

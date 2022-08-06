@@ -63,7 +63,7 @@ class Estimator(BaseEstimator, RegressorMixin):
 
 
 if __name__ == '__main__':
-    est = Estimator(name="ackley", config=FeedforwardNeuralConfig(1E-4, 128, 420, 2, "Sigmoid"), epochs=200)
+    est = Estimator(name="ackley", config=FeedforwardNeuralConfig(1E-6, 512, 240, 4, "ReLU"), epochs=200)
     container = init_container()
     sample_repo = container.sample_repository()
     dataset = sample_repo.get("62dcc587ce0f41019d2d7d78").to_dataset()

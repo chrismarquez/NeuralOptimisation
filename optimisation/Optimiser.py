@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import tempfile
 from datetime import datetime
-from typing import Callable
+from typing import Callable, Dict
 
 import pandas as pd
 import pyomo.core
@@ -71,13 +71,32 @@ class Optimiser:
         options = {} if self.solver_type == "ipopt" else {"threads": 8}
         start_time = datetime.now()
         try:
-            results = self._solver.solve(self._model, tee=True, timelimit=self.timeout, options=options)
+            results = self._solve(options)
             self.optimisation_time = self._get_optimisation_time(results)
             return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
         except Exception:
             end_time = datetime.now()
             duration = end_time - start_time
             raise OptimisationException(duration.total_seconds())
+
+    def _solve(self, options: Dict):
+        if self.solver_type != "mindtpy":
+            return self._solver.solve(
+                self._model,
+                tee=True,
+                timelimit=self.timeout,
+                options=options
+            )
+        else:
+            return self._solver.solve(
+                self._model,
+                mip_solver='gurobi',
+                nlp_solver='ipopt',
+                tee=True,
+                timelimit=self.timeout,
+                options=options
+            )
+
 
     @staticmethod
     def load_from_path(path: str, input_bounds: Bounds, solver_type: Solver,

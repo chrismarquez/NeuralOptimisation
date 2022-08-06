@@ -43,3 +43,6 @@ class Experiment:
             return _get_fnn_hyper_params()
         elif self.type == "Convolutional":
             return _get_cnn_hyper_params()
+
+if __name__ == '__main__':
+    _get_fnn_hyper_params()

@@ -115,11 +115,19 @@ class NeuralModel(DataModel):
     function: str
     type: NeuralType
     neural_config: NeuralConfig
+    expected_optimisations: int
     model_data: Optional[bytes] = None
     neural_properties: Optional[NeuralProperties] = None
     optimisation_properties: List[OptimisationProperties] = field(default_factory=list)
     id: Optional[str] = None
     experiment_id: Optional[str] = None
+
+    def is_complete(self) -> bool:
+        if self.model_data is None or self.neural_properties is None:
+            return False
+        if len(self.optimisation_properties) != self.expected_optimisations:
+            return False
+        return True
 
     @staticmethod
     def _get_neural_config(document: Dict) -> NeuralConfig:
@@ -141,6 +149,7 @@ class NeuralModel(DataModel):
             function=document["function"],
             type=document["type"],
             neural_config=NeuralModel._get_neural_config(document),
+            expected_optimisations=document["expected_optimisations"],
             model_data=document.get("model_data", None),
             neural_properties=neural_props,
             optimisation_properties=opt_props,
