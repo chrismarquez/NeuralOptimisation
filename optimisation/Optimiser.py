@@ -93,7 +93,7 @@ class Optimiser:
                 mip_solver='gurobi',
                 nlp_solver='ipopt',
                 tee=True,
-                timelimit=self.timeout,
+                time_limit=self.timeout,
                 options=options
             )
 
