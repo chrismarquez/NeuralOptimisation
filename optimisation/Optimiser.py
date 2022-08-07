@@ -179,4 +179,5 @@ if __name__ == '__main__':
     model = repo.get("62e1a728517f400bb65f3ca2")
     optimiser = Optimiser.load_from_model(model, input_bounds, solver_type="mindtpy")
     values = optimiser.solve()
+    print(optimiser.optimisation_time)
     print(values)
