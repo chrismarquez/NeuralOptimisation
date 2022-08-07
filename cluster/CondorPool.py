@@ -104,12 +104,20 @@ class CondorPool(WorkerPool):
         return self._write_script_file(cmd, suffix=".cmd")
 
     def _get_node_req(self, job: Job):
+        blacklist = self._blacklist()
         if self.config.job_type == "GPU":
-            return """regexp("^(gpu)[0-9][0-9]", TARGET.Machine) == True"""
+            regex = f"^(?=((gpu)[0-9][0-9]))"
         elif self.config.job_type == "CPU" and job.requires_gurobi_license():
-            return """regexp("^(((ray|texel)0[1-8])|((vertex)0[1-2]))", TARGET.Machine) == True"""
+            regex = f"^(?=(((ray|texel)0[1-8])|((vertex)0[1-2])))"
         else:
-            return """regexp("^(?=((ray|texel|vertex)[0-9][0-9]))(?!texel21)", TARGET.Machine) == True"""
+            regex = f"^(?=((ray|texel|vertex)[0-9][0-9]))"
+        return f"""regexp("{regex}{blacklist}", TARGET.Machine) == True"""
+
+    @staticmethod
+    def _blacklist():
+        black_list = ["vertex01", "texel21"]
+        regex = [f"(?!{node})" for node in black_list]
+        return "".join(regex)
 
     def test(self):
         _, stdout, _ = self.ssh_client.exec_command(f"{CONDOR_PATH}/condor_submit {self.root_dir}/test.job")
@@ -122,4 +130,4 @@ class CondorPool(WorkerPool):
 if __name__ == '__main__':
     config = CondorConfig("csm21", "CPU", True)
     pool = CondorPool("/vol/bitbucket/csm21/NeuralOptimisation", 2, "shell1.doc.ic.ac.uk", config)
-
+#
