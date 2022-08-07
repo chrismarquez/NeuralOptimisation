@@ -123,16 +123,18 @@ class Optimiser:
         return Optimiser._load(net, input_bounds, solver_type)
 
     def _get_optimisation_time(self, results, start_time) -> float:
+        if results is None or self.solver_type == "mindtpy":
+            end_time = datetime.now()
+            duration = end_time - start_time
+            return duration.total_seconds()
+
         if self.solver_type == "cbc":
             return float(results['Solver'][0]['Wallclock time'])
         elif self.solver_type == "ipopt":
             return float(results['Solver'][0]['Time'])
         elif self.solver_type == "gurobi":
             return float(results['Solver'][0]['Wall time'])
-        elif self.solver_type == "mindtpy":
-            end_time = datetime.now()
-            duration = end_time - start_time
-            return duration.total_seconds()
+
         return -1.0
 
     @staticmethod
