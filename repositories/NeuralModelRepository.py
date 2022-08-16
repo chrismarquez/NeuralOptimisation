@@ -71,18 +71,18 @@ if __name__ == '__main__':
     repo = NeuralModelRepository(uri="mongodb://localhost:27017")
     input_bounds = Bounds(0.2)
     for function in tqdm(["ackley", "rastrigin", "rosenbrock", "sum_squares"], colour="green"):
-        df = Plot.load_data(function)
+        df = Plot.load_data_from_file(function)
         for id, row in tqdm(df.iterrows(), total=df.shape[0], colour="orange"):
             learning_rate, batch_size, network_size, depth, activation_fn, rmse, r2, x, y, location_error, optimum_error, computation_time = row
             neural_config = FeedforwardNeuralConfig(learning_rate, batch_size, network_size, depth, activation_fn)
             neural_props = NeuralProperties(rmse, r2)
             optimisation_props = OptimisationProperties(
-                x, y, input_bounds, location_error, optimum_error, computation_time, 0.0
+                x, y, input_bounds, location_error, optimum_error, computation_time, 0.0, True
             )
             model_file = open(f"../../resources/trained/{function}/{id}.pt", "rb")
             model_data = model_file.read()
             model_file.close()
             model = NeuralModel(
-                function, "Feedforward", neural_config, model_data, neural_props, [optimisation_props], experiment_id="0"
+                function, "Feedforward", neural_config, 2, model_data, neural_props, [optimisation_props], experiment_id="0"
             )
             repo.save(model)

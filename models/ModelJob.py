@@ -17,7 +17,6 @@ class ModelJob(Job):
 
     def __init__(self, model_id: str, config: NeuralConfig, epochs: int):
         super().__init__(model_id)
-
         self.config = config
         self.epochs = epochs
         self.sample_repo: Optional[SampleDatasetRepository] = None
