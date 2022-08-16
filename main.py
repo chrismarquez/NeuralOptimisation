@@ -87,6 +87,13 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
+        '--l1reg',
+        type=float,
+        required=False,
+        help=f"Value of the lambda coefficient for L1 Regularization for model training. Skips regularization if omitted"
+    )
+
+    parser.add_argument(
         '--test',
         action="store_true",
         help=f"Run only a few examples to perform a quick test"
@@ -100,7 +107,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    experiment = Experiment(args.experiment, cast(NeuralType, args.type), args.epochs)
+    experiment = Experiment(args.experiment, cast(NeuralType, args.type), args.epochs, args.l1reg)
 
     use_cluster = not args.local
 

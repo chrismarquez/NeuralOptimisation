@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import Literal, Dict
+from typing import Literal, Dict, Optional
 
 NeuralType = Literal["Feedforward", "Convolutional"]
 
@@ -37,6 +37,7 @@ class Experiment:
     exp_id: str
     type: NeuralType
     epochs: int
+    l1_reg_lambda: Optional[float]
 
     def get_hyper_params(self) -> Dict:
         if self.type == "Feedforward":

@@ -8,8 +8,7 @@ import numpy
 
 
 @dataclass
-class \
-    Polynomial:
+class Polynomial:
     values: List[float]
 
     @staticmethod

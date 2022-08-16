@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Tuple, Optional
 
 import numpy as np
 import torch
@@ -24,12 +24,14 @@ class Estimator(BaseEstimator, RegressorMixin):
         self,
         name: str = "",
         config: NeuralConfig = FeedforwardNeuralConfig(1E-3, 128, 138, 2, "ReLU"),
-        epochs: int = 200
+        epochs: int = 200,
+        l1_reg_lambda: Optional[float] = None
     ):
         self.name = name
         self.regressor = None
         self.config = config
         self.epochs = epochs
+        self.l1_reg_lambda = l1_reg_lambda
 
     def from_existing(self, net: LoadableModule) -> Estimator:
         self.regressor = Regressor(net)
@@ -39,7 +41,9 @@ class Estimator(BaseEstimator, RegressorMixin):
         net = self._build_net()
         trainable_params = net.count_parameters()
         params_class = round(trainable_params / 10_000.0) * 10
-        trainer = Trainer(net, lr=self.config.learning_rate, batch_size=self.config.batch_size)
+        trainer = Trainer(
+            net, lr=self.config.learning_rate, batch_size=self.config.batch_size, l1_reg_lambda=self.l1_reg_lambda
+        )
         details = f"Type [{type(self.config)}] Depth [{self.config.depth}] Params [{trainable_params}]  Class[{params_class} k]  Activation [{self.config.activation_fn}] "
         trainer.train(x_train, y_train, self.epochs, details=details)
         self.regressor = Regressor(net)
@@ -63,7 +67,8 @@ class Estimator(BaseEstimator, RegressorMixin):
 
 
 if __name__ == '__main__':
-    est = Estimator(name="ackley", config=FeedforwardNeuralConfig(1E-6, 512, 240, 4, "ReLU"), epochs=200)
+    l1_reg_lambda = 0.005
+    est = Estimator(name="ackley", config=FeedforwardNeuralConfig(1E-6, 512, 240, 4, "ReLU"), epochs=200, l1_reg_lambda=l1_reg_lambda)
     container = init_container()
     sample_repo = container.sample_repository()
     dataset = sample_repo.get("62dcc587ce0f41019d2d7d78").to_dataset()
