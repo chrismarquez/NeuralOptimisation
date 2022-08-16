@@ -6,14 +6,15 @@ from tqdm import tqdm
 
 from cluster.Job import Job, JobType
 from cluster.JobContainer import JobContainer
+from cluster.JobInit import init_container
 
 T = TypeVar('T')
 
 Submit = Callable[[Job], Awaitable[Task]]
-Pipe = Callable[[Task], Awaitable[List[Job]]]
+Pipe = Callable[[Job, Task], Awaitable[List[Job]]]
 
 
-async def _end_pipe(task: Awaitable[None]) -> List[Job]:
+async def _end_pipe(_: Job, task: Awaitable[None]) -> List[Job]:
     await task
     return []
 
@@ -34,6 +35,7 @@ class Segment:
         self.job_queue: Queue[T] = Queue(maxsize=capacity)
         self.submit = submit
         self.pipe = pipe
+        self.lock = asyncio.Lock()
         self.next_segment: Optional[Segment] = None
         self._consumer: Optional[Task] = None
 
@@ -47,10 +49,11 @@ class Segment:
         await self.job_queue.join()
         self._consumer.cancel()
 
-    async def _pipe_and_mark(self, task: Task) -> List[Job]:
+    async def _pipe_and_mark(self, completed_job: Job, task: Task) -> List[Job]:
         try:
-            jobs = await self.pipe(task)
-            self.job_completed += 1
+            jobs = await self.pipe(completed_job, task)
+            async with self.lock:
+                self.job_completed += 1
         except RuntimeError:
             print(f"Could not pipe task {task}")
             jobs = []
@@ -61,11 +64,11 @@ class Segment:
         while True:
             job = await self.job_queue.get()
             task = await self.submit(job)
-            await asyncio.sleep(0.3)
-            asyncio.create_task(self._post_process(task))
+            await asyncio.sleep(0.2)
+            asyncio.create_task(self._post_process(job, task))
 
-    async def _post_process(self, task: Task):
-        next_jobs = await self._pipe_and_mark(task)
+    async def _post_process(self, completed_job: Job, task: Task):
+        next_jobs = await self._pipe_and_mark(completed_job, task)
         if self.next_segment is not None:
             for job in next_jobs:
                 await self.next_segment.enqueue(job)
@@ -73,7 +76,8 @@ class Segment:
 
 class Pipeline:
 
-    def __init__(self, segments: Optional[List[Segment]] = None):
+    def __init__(self, debug: bool, segments: Optional[List[Segment]] = None,):
+        self.debug = debug
         if segments is None:
             segments = []
         self.job_batch_size: int = 0
@@ -103,6 +107,9 @@ class Pipeline:
         first_segment = self.segments[0]
         for job in jobs:
             await first_segment.enqueue(job)
+        if self.debug:
+            print("All jobs are enqueued in pipeline")
+
 
     def _spawn_reporters(self) -> List[Task]:
         return [
@@ -139,19 +146,18 @@ class DummyJob(Job):
 async def _mock_submit(job: Job) -> Awaitable[Task]:
     loop = asyncio.get_running_loop()
     future = loop.create_future()
-    container = JobContainer()
-    container.init_resources()
-    container.wire(modules=[__name__])
+    container = init_container()
     future.set_result(job.run(container))
     return future
 
-async def _mock_pipe(task: Awaitable[None]) -> List[Job]:
+
+async def _mock_pipe(_: Job, task: Awaitable[None]) -> List[Job]:
     await task
     return [DummyJob("")]
 
 
 async def main():
-    pipeline = Pipeline([
+    pipeline = Pipeline(False, [
         Segment(name="Train", capacity=50, expected_jobs=50, submit=_mock_submit, pipe=_mock_pipe),
         Segment(name="Opt", capacity=50, expected_jobs=50, submit=_mock_submit)
     ])

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from bson import ObjectId
 from pymongo import MongoClient
@@ -8,19 +8,22 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 from tqdm import tqdm
 
-from repositories.db_models import NeuralModel, NeuralProperties, OptimisationProperties, FeedforwardNeuralConfig, Bounds
+from repositories.db_models import NeuralModel, NeuralProperties, OptimisationProperties, FeedforwardNeuralConfig, \
+    Bounds
 
 
 class NeuralModelRepository:
 
     def __init__(self, uri: str):
-        print(f"Connecting to DB at: {uri}")
+        print(f"[NeuralModelRepository] Connecting to DB at: {uri}")
         self._client = MongoClient(uri)
         self._db: Database = self._client.NeuralOptimisation
         self._collection: Collection = self._db.NeuralModel
 
     def get(self, id: str) -> NeuralModel:
-        document = self._collection.find_one({"_id": ObjectId(id)})
+        document: Optional[Dict] = self._collection.find_one({"_id": ObjectId(id)})
+        if document is None:
+            raise RuntimeError(f"Document with ID {id} not found")
         return NeuralModel.from_dict(document)
 
     def get_all_id(self, function: str = None, non_optimised: bool = False):
@@ -30,14 +33,20 @@ class NeuralModelRepository:
         id_list = self._collection.find(query).distinct("_id")
         return [str(model_id) for model_id in id_list]
 
-    def get_by_config(self, function: str, config: FeedforwardNeuralConfig, exp_id: str) -> List[NeuralModel]:
+    def count_total(self, exp_id) -> int:
+        query = {"experiment_id": exp_id}
+        return self._collection.count_documents(query)
+
+    def experiment_exists(self, exp_id: str) -> bool:
+        query = {"experiment_id": exp_id}
+        return self._collection.count_documents(query) > 0
+
+    def count_models_to_train(self, exp_id: str) -> int:
         query = {
-            "function": function,
-            "neural_config": config.to_dict(),
+            "neural_properties": None,
             "experiment_id": exp_id
         }
-        documents = self._collection.find(query)
-        return [NeuralModel.from_dict(document) for document in documents]
+        return self._collection.count_documents(query)
 
     def get_all(self, experiment_id: Optional[str] = None) -> List[NeuralModel]:
         query = {} if experiment_id is None else {"experiment_id": experiment_id}
@@ -62,14 +71,18 @@ if __name__ == '__main__':
     repo = NeuralModelRepository(uri="mongodb://localhost:27017")
     input_bounds = Bounds(0.2)
     for function in tqdm(["ackley", "rastrigin", "rosenbrock", "sum_squares"], colour="green"):
-        df = Plot.load_data(function)
+        df = Plot.load_data_from_file(function)
         for id, row in tqdm(df.iterrows(), total=df.shape[0], colour="orange"):
             learning_rate, batch_size, network_size, depth, activation_fn, rmse, r2, x, y, location_error, optimum_error, computation_time = row
             neural_config = FeedforwardNeuralConfig(learning_rate, batch_size, network_size, depth, activation_fn)
             neural_props = NeuralProperties(rmse, r2)
-            optimisation_props = OptimisationProperties(x, y, input_bounds, location_error, optimum_error, computation_time)
+            optimisation_props = OptimisationProperties(
+                x, y, input_bounds, location_error, optimum_error, computation_time, 0.0, True
+            )
             model_file = open(f"../../resources/trained/{function}/{id}.pt", "rb")
             model_data = model_file.read()
             model_file.close()
-            model = NeuralModel(function, neural_config, neural_props, model_data, optimisation_props, experiment_id="0")
+            model = NeuralModel(
+                function, "Feedforward", neural_config, 2, model_data, neural_props, [optimisation_props], experiment_id="0"
+            )
             repo.save(model)

@@ -19,7 +19,7 @@ class SlurmPool(WorkerPool):
         super().__init__(capacity, root_dir)
         self.debug = debug
 
-    async def submit(self, job: Job) -> Awaitable[str]:
+    async def submit(self, job: Job) -> Awaitable[bool]:
         slurm_job_id = await self._submit(job)
         loop = asyncio.get_running_loop()
         future = loop.create_future()
@@ -27,17 +27,18 @@ class SlurmPool(WorkerPool):
         asyncio.create_task(task)
         return future
 
-    async def _post_process(self, future: Future[str], slurm_job_id: int):
+    async def _post_process(self, future: Future[bool], slurm_job_id: int):
         while True:
-            status = await self.status(slurm_job_id)
-            if self.debug:
-                print(f"Job Status {slurm_job_id}: {status}")
-            if status.job_state == SlurmJobState.COMPLETED:
-                break
+            try:
+                status = await self.status(slurm_job_id)
+                if self.debug:
+                    print(f"Job Status {slurm_job_id}: {status}")
+                if status.job_state == SlurmJobState.COMPLETED:
+                    break
+            except KeyError:
+                pass
             await asyncio.sleep(3)
-        lines = self.get_job_output(slurm_job_id)
-        model_id = SlurmPool.find_model_id(lines)
-        future.set_result(model_id)
+        future.set_result(True)
 
     def job_type(self) -> JobType:
         return "GPU"
@@ -50,8 +51,10 @@ class SlurmPool(WorkerPool):
             result = subprocess.run(sbatch, shell=True, capture_output=True)
             output = result.stdout.decode("utf-8")
             return SlurmPool._parse_job_id(output)
-        except ValueError:
+        except ValueError as err:
             await self._release_slot()
+            if self.debug:
+                print(err)
             raise RuntimeError(f"Task creation error for job {job.uuid}")
 
     async def status(self, job_id: int) -> SlurmJobStatus:

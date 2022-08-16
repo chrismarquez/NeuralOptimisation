@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import gc
 from collections import OrderedDict
-from typing import List, Tuple
+from typing import List
 
 import torch
 from torch import nn
@@ -13,9 +13,6 @@ from models.LoadableModule import LoadableModule, Activation, Layer
 
 
 class FNN(LoadableModule):
-
-    def dummy_input(self) -> torch.Tensor:
-        return torch.empty((1, 2))
 
     def __init__(self, nodes: int, depth: int, activation: Activation):
         super().__init__(activation)
@@ -41,6 +38,9 @@ class FNN(LoadableModule):
         layers.append((f"out", nn.Linear(in_features=sizes[-1], out_features=1)))
         return layers
 
+    def dummy_input(self) -> torch.Tensor:
+        return torch.empty((1, 2))
+
     # [math.sqrt(0.25 * 10_000 * i + 1) - 1 for i in range(1, 10)]
     # [(math.sqrt((1.0/32.0)* 10_000 * i + 1.0/9.0) - 1.0/3.0) / 3.0 for i in range(1, 9)]
 
@@ -52,7 +52,7 @@ class FNN(LoadableModule):
 
 
 if __name__ == '__main__':
-    net = FNN(nodes=300, depth=4, activation="ReLU")
+    net = FNN(nodes=300, depth=4, activation="Sigmoid")
     print(net)
     print(net.count_parameters())
     summary(net, (1, 2), batch_size=128)

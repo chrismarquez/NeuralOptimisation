@@ -14,10 +14,9 @@ from repositories.SampleDatasetRepository import SampleDatasetRepository
 
 
 class Container(containers.DeclarativeContainer):
-    print("Initialising dependencies...")
-
     env = get_env()
     config_file = get_config(env)
+    print(f"Environment: {env}. Using config file: {config_file}")
     path = f"resources/{config_file}"
     config = providers.Configuration(ini_files=[path])
 
@@ -41,25 +40,28 @@ class Container(containers.DeclarativeContainer):
         ExperimentExecutor,
         cluster=cluster,
         neural_repo=neural_repository,
-        sample_repo=sample_repository
+        sample_repo=sample_repository,
+        raw_debug=config.log.debug
     )
 
-    print("Dependencies ready.")
 
-
-@inject
-async def main(experiment: Experiment, test_run: bool, container: Container = Provide[Container]):
-    executor = container.experiment_executor()
-    await executor.run_experiment(experiment, test_run=test_run)
-
-
-if __name__ == '__main__':
-    print("Loading Container...")
+def init_container() -> Container:
     container = Container()
     container.init_resources()
     container.wire(modules=[__name__])
-    print("Container ready.")
+    return container
 
+
+@inject
+async def main(experiment: Experiment, test_run: bool, use_cluster: bool, container: Container = Provide[Container]):
+    print("Initialising Executor.")
+    executor = container.experiment_executor()
+    print("Executor Ready.")
+    await executor.run_experiment(experiment, test_run=test_run, use_cluster=use_cluster)
+
+
+if __name__ == '__main__':
+    container = init_container()
     parser = argparse.ArgumentParser(description='Neural Optimisation Experiment Runner')
 
     parser.add_argument(
@@ -78,13 +80,28 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
+        '--epochs',
+        type=int,
+        required=True,
+        help=f"Number of Epochs for Experiment Training"
+    )
+
+    parser.add_argument(
         '--test',
         action="store_true",
         help=f"Run only a few examples to perform a quick test"
     )
 
+    parser.add_argument(
+        '--local',
+        action="store_true",
+        help=f"Run examples locally with the underlying hardware instead of using the institutional cluster"
+    )
+
     args = parser.parse_args()
 
-    experiment = Experiment(args.experiment, cast(NeuralType, args.type))
+    experiment = Experiment(args.experiment, cast(NeuralType, args.type), args.epochs)
 
-    asyncio.run(main(experiment, args.test))
+    use_cluster = not args.local
+
+    asyncio.run(main(experiment, args.test, use_cluster))

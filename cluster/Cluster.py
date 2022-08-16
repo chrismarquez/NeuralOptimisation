@@ -1,6 +1,5 @@
-from asyncio import Queue, Future, Task
-
 import asyncio
+from asyncio import Queue, Future, Task
 from typing import Awaitable, List, Mapping, Tuple, Optional
 
 import paramiko
@@ -16,27 +15,31 @@ class Cluster:
     def __init__(self, root_dir, condor_server: str, raw_debug: str):
         user = "csm21"
         self.root_dir = root_dir
-        debug = raw_debug == "True"
+        self.debug = raw_debug == "True"
         self.pools: List[WorkerPool] = [
-            SlurmPool(root_dir, capacity=2, debug=debug),
-            CondorPool(root_dir, capacity=40, condor_server=condor_server, config=CondorConfig(user, "CPU", debug)),
-            CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig(user, "GPU", debug))
+            SlurmPool(root_dir, capacity=2, debug=self.debug),
+            CondorPool(root_dir, capacity=40, condor_server=condor_server, config=CondorConfig(user, "CPU", self.debug)),
+            CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig(user, "GPU", self.debug))
         ]
 
+        print("[Cluster] Connecting to Shell Server.")
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
         self.ssh_client.connect(condor_server, username=user)
+        transport = self.ssh_client.get_transport()
+        transport.set_keepalive(interval=300)
+        print("Connected.")
 
         self.consumers: List[Task] = []
         self.kerberos_request: Optional[Task] = None
 
-        self.type_queues: Mapping[JobType, Queue[Tuple[Future[str], Job]]] = {
+        self.type_queues: Mapping[JobType, Queue[Tuple[Future[bool], Job]]] = {
             "CPU": Queue(),
             "GPU": Queue()
         }
 
     # Coroutine launch method
-    async def submit(self, job: Job) -> Awaitable[str]:
+    async def submit(self, job: Job) -> Awaitable[bool]:
         job_type = job.get_job_type()
         loop = asyncio.get_running_loop()
         future = loop.create_future()
@@ -65,6 +68,10 @@ class Cluster:
                 asyncio.create_task(task)
             except RuntimeError as e:
                 future.set_exception(e)
+                if self.debug:
+                    print(f"Failed Job {job.uuid} with model {job.model_id}. Adding to queue again")
+                job_type = job.get_job_type()
+                await self.type_queues[job_type].put((future, job))
 
     async def _on_complete(self, future: Future, pool_future: Awaitable):
         result = await pool_future
@@ -72,10 +79,10 @@ class Cluster:
 
     async def _request_kerberos_ticket(self):
         minutes = 60
-        sleep_period = 15 * minutes
+        hours = 60 * minutes
+        sleep_period = 4 * hours
         while True:
             command = f"{self.root_dir}/../cronjobs/kerberos.sh"
             _, stdout, _ = self.ssh_client.exec_command(command)
-            result = stdout.read().decode("utf-8")
-            print(result)
+            _ = stdout.read().decode("utf-8")
             await asyncio.sleep(sleep_period)

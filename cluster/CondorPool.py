@@ -6,7 +6,7 @@ from typing import List, Awaitable, Optional
 
 import paramiko
 
-from cluster.CondorJobStatus import CondorJobStatus
+from cluster.CondorJobStatus import CondorJobStatus, CondorJobState
 from cluster.Job import JobType, Job
 from cluster.WorkerPool import WorkerPool
 
@@ -32,11 +32,15 @@ class CondorPool(WorkerPool):
         self.config = config
         self.condor_server = condor_server
 
+        print(f"[CondorPool] [{self.job_type()}] Connecting to Shell Server.")
         self.ssh_client = paramiko.SSHClient()
         self.ssh_client.load_system_host_keys()
         self.ssh_client.connect(self.condor_server, username=config.user)
+        transport = self.ssh_client.get_transport()
+        transport.set_keepalive(interval=300)
+        print("Connected.")
 
-    async def submit(self, job: Job) -> Awaitable[str]:
+    async def submit(self, job: Job) -> Awaitable[bool]:
         condor_job_id = await self._submit(job)
         loop = asyncio.get_running_loop()
         future = loop.create_future()
@@ -44,7 +48,7 @@ class CondorPool(WorkerPool):
         asyncio.create_task(task)
         return future
 
-    async def _post_process(self, future: Future[str], condor_job_id: str):
+    async def _post_process(self, future: Future[bool], condor_job_id: str):
         while True:
             status = await self.status(condor_job_id)
             if self.config.debug:
@@ -52,12 +56,9 @@ class CondorPool(WorkerPool):
             if status is None:
                 break
             await asyncio.sleep(3)
-        if self.job_type() == "GPU":
-            lines = self.get_job_output(condor_job_id)
-            model_id = CondorPool.find_model_id(lines)
-            future.set_result(model_id)
-        else:
-            future.set_result(str(condor_job_id))
+        if self.config.debug:
+            print(f"Job Status {condor_job_id}: {CondorJobState.C}")
+        future.set_result(True)
 
     async def _submit(self, job: Job) -> str:
         await self._request_slot()
@@ -103,14 +104,20 @@ class CondorPool(WorkerPool):
         return self._write_script_file(cmd, suffix=".cmd")
 
     def _get_node_req(self, job: Job):
+        blacklist = self._blacklist()
         if self.config.job_type == "GPU":
-            return """regexp("^(gpu)[0-9][0-9]", TARGET.Machine) == True"""
+            regex = f"^(?=((gpu)[0-9][0-9]))"
         elif self.config.job_type == "CPU" and job.requires_gurobi_license():
-            return """regexp("^(((ray|texel)0[1-8])|((vertex)0[1-2]))", TARGET.Machine) == True"""
+            regex = f"^(?=(((ray|texel)0[1-8])|((vertex)0[1-2])))"
         else:
-            return """regexp("^(ray|texel|vertex)[0-9][0-9]", TARGET.Machine) == True"""
+            regex = f"^(?=((ray|texel|vertex)[0-9][0-9]))"
+        return f"""regexp("{regex}{blacklist}", TARGET.Machine) == True"""
 
-
+    @staticmethod
+    def _blacklist():
+        black_list = ["vertex01", "texel21"]
+        regex = [f"(?!{node})" for node in black_list]
+        return "".join(regex)
 
     def test(self):
         _, stdout, _ = self.ssh_client.exec_command(f"{CONDOR_PATH}/condor_submit {self.root_dir}/test.job")
@@ -123,4 +130,4 @@ class CondorPool(WorkerPool):
 if __name__ == '__main__':
     config = CondorConfig("csm21", "CPU", True)
     pool = CondorPool("/vol/bitbucket/csm21/NeuralOptimisation", 2, "shell1.doc.ic.ac.uk", config)
-
+#

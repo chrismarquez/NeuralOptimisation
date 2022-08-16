@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import os
 import tempfile
-from typing import Callable
+from datetime import datetime
+from typing import Callable, Dict
 
 import pandas as pd
 import pyomo.core
 import pyomo.environ as pyo
 import torch.onnx
 from omlt import OmltBlock  # Ignoring dependency resolution
+from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
 from omlt.neuralnet import FullSpaceNNFormulation, NetworkDefinition
 
 from data import functions
@@ -19,13 +21,21 @@ from models.LoadableModule import LoadableModule
 from optimisation.Solver import Solver
 from repositories.db_models import NeuralModel, Bounds, FeedforwardNeuralConfig, ConvolutionalNeuralConfig
 
-from omlt.io.onnx import write_onnx_model_with_bounds, load_onnx_neural_network_with_bounds
+_MINUTE = 60.0
+_HOUR = 60.0 * _MINUTE
+
+
+class OptimisationException(Exception):
+
+    def __init__(self, computation_time: float):
+        self.computation_time = computation_time
 
 
 class Optimiser:
 
     def __init__(self, network_definition: NetworkDefinition, solver_type: Solver = "cbc"):
         self.solver_type = solver_type
+        self.timeout = 3 * _HOUR
 
         model = pyo.ConcreteModel()
         model.net = OmltBlock()
@@ -58,10 +68,35 @@ class Optimiser:
         self.optimisation_time = 0.0
 
     def solve(self):
-        options = {} if self.solver_type == "ipopt" else {"threads": 12}
-        results = self._solver.solve(self._model, tee=False, options=options)
-        self.optimisation_time = self._get_optimisation_time(results)
-        return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
+        options = {} if self.solver_type == "ipopt" else {"threads": 8}
+        start_time = datetime.now()
+        try:
+            results = self._solve(options)
+            self.optimisation_time = self._get_optimisation_time(results, start_time)
+            return pyo.value(self._model.x), pyo.value(self._model.y), pyo.value(self._model.output)
+        except Exception:
+            end_time = datetime.now()
+            duration = end_time - start_time
+            raise OptimisationException(duration.total_seconds())
+
+    def _solve(self, options: Dict):
+        if self.solver_type != "mindtpy":
+            return self._solver.solve(
+                self._model,
+                tee=True,
+                timelimit=self.timeout,
+                options=options
+            )
+        else:
+            return self._solver.solve(
+                self._model,
+                mip_solver='gurobi',
+                nlp_solver='ipopt',
+                tee=True,
+                time_limit=self.timeout,
+                options=options
+            )
+
 
     @staticmethod
     def load_from_path(path: str, input_bounds: Bounds, solver_type: Solver,
@@ -87,13 +122,19 @@ class Optimiser:
 
         return Optimiser._load(net, input_bounds, solver_type)
 
-    def _get_optimisation_time(self, results) -> float:
+    def _get_optimisation_time(self, results, start_time) -> float:
+        if results is None or self.solver_type == "mindtpy":
+            end_time = datetime.now()
+            duration = end_time - start_time
+            return duration.total_seconds()
+
         if self.solver_type == "cbc":
             return float(results['Solver'][0]['Wallclock time'])
         elif self.solver_type == "ipopt":
             return float(results['Solver'][0]['Time'])
         elif self.solver_type == "gurobi":
             return float(results['Solver'][0]['Wall time'])
+
         return -1.0
 
     @staticmethod
@@ -131,12 +172,12 @@ class Optimiser:
 
 if __name__ == '__main__':
     from repositories.NeuralModelRepository import NeuralModelRepository
-
     [x_max] = [x_max for fn, x_max in functions.pool.items() if fn == functions.sum_squares]
     input_bounds: Bounds = Bounds(0.2)
     print(input_bounds)
     repo = NeuralModelRepository("mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
-    model = repo.get("62b4a5e5e99c0fd60ce809d7")
-    optimiser = Optimiser.load_from_model(model, input_bounds, solver_type="gurobi")
+    model = repo.get("62e1a728517f400bb65f3ca2")
+    optimiser = Optimiser.load_from_model(model, input_bounds, solver_type="mindtpy")
     values = optimiser.solve()
+    print(optimiser.optimisation_time)
     print(values)

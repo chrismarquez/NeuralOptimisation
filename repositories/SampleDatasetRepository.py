@@ -15,7 +15,7 @@ from repositories.db_models import SampleDataset, Sample
 class SampleDatasetRepository:
 
     def __init__(self, uri: str):
-        print(f"Connecting to DB at: {uri}")
+        print(f"[SampleDatasetRepository] Connecting to DB at: {uri}")
         self._client = MongoClient(uri)
         self._db: Database = self._client.NeuralOptimisation
         self._root_collection: Collection = self._db.SampleDataset
@@ -29,6 +29,22 @@ class SampleDatasetRepository:
         }
         document = document | samples
         return SampleDataset.from_dict(document)
+
+    def get_name_by_id(self, id: str) -> str:
+        query = {"_id": ObjectId(id)}
+        document = self._root_collection.find_one(query)
+        if document is not None:
+            return str(document["function"])
+        else:
+            raise RuntimeError(f"Name for ID {id} not found")
+
+    def get_id_by_name(self, function_name: str) -> str:
+        query = {"function": function_name}
+        document = self._root_collection.find_one(query)
+        if document is not None:
+            return str(document["_id"])
+        else:
+            raise RuntimeError(f"ID for function {function_name} not found")
 
     def get_all(self) -> List[SampleDataset]:
         documents = self._root_collection.find()
@@ -54,7 +70,7 @@ class SampleDatasetRepository:
 
 
 if __name__ == '__main__':
-    repo = SampleDatasetRepository(uri="mongodb://cloud-vm-42-88.doc.ic.ac.uk:27017/")
+    repo = SampleDatasetRepository(uri="mongodb://localhost:27017/")
     for file in os.listdir("../resources/samples/"):
         raw_dataset = np.loadtxt(f"../resources/samples/{file}", delimiter=",")
         name, ext = file.split(".")

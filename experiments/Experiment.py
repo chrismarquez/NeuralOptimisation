@@ -17,7 +17,7 @@ def _get_fnn_hyper_params():
         "learning_rate": [1E-6, 3E-7],
         "batch_size": [128, 512],
         "network_shape": sizes_2 + sizes_4,
-        "activation_fn": ["ReLU", "Sigmoid", "Tanh", "Softplus"],
+        "activation_fn": ["ReLU", "Sigmoid"],
     }
 
 
@@ -36,9 +36,13 @@ def _get_cnn_hyper_params():
 class Experiment:
     exp_id: str
     type: NeuralType
+    epochs: int
 
     def get_hyper_params(self) -> Dict:
         if self.type == "Feedforward":
             return _get_fnn_hyper_params()
         elif self.type == "Convolutional":
             return _get_cnn_hyper_params()
+
+if __name__ == '__main__':
+    _get_fnn_hyper_params()

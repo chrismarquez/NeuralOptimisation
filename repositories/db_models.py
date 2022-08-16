@@ -2,19 +2,15 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, asdict, field
-
-from typing import Optional, Dict, List, Union, Literal
+from typing import Optional, Dict, List, Union
 
 import numpy as np
 from bson import ObjectId
+from dacite import from_dict
 
 from data.Dataset import Dataset
 from experiments.Experiment import NeuralType
 from models.FNN import Activation
-
-from dacite import from_dict
-
-
 # Bounds = Mapping[int, Tuple[float, float]]
 from optimisation.Solver import Solver
 
@@ -56,6 +52,9 @@ class FeedforwardNeuralConfig(DataModel):
     def __iter__(self):
         return iter((self.learning_rate, self.batch_size, self.network_size, self.depth, self.activation_fn))
 
+    def get_neural_type(self) -> NeuralType:
+        return "Feedforward"
+
     @staticmethod
     def from_dict(document: Dict) -> FeedforwardNeuralConfig:
         return from_dict(FeedforwardNeuralConfig, document)
@@ -73,6 +72,9 @@ class ConvolutionalNeuralConfig(DataModel):
 
     def __iter__(self):
         return iter((self.learning_rate, self.batch_size, self.filters, self.filter_size, self.depth, self.activation_fn))
+
+    def get_neural_type(self) -> NeuralType:
+        return "Convolutional"
 
     @staticmethod
     def from_dict(document: Dict) -> ConvolutionalNeuralConfig:
@@ -101,6 +103,7 @@ class OptimisationProperties(DataModel):
     location_error: float
     optimum_error: float
     computation_time: float
+    successful: bool
 
     @staticmethod
     def from_dict(document: Dict) -> OptimisationProperties:
@@ -112,11 +115,19 @@ class NeuralModel(DataModel):
     function: str
     type: NeuralType
     neural_config: NeuralConfig
-    neural_properties: NeuralProperties
-    model_data: bytes
+    expected_optimisations: int
+    model_data: Optional[bytes] = None
+    neural_properties: Optional[NeuralProperties] = None
     optimisation_properties: List[OptimisationProperties] = field(default_factory=list)
     id: Optional[str] = None
     experiment_id: Optional[str] = None
+
+    def is_complete(self) -> bool:
+        if self.model_data is None or self.neural_properties is None:
+            return False
+        if len(self.optimisation_properties) != self.expected_optimisations:
+            return False
+        return True
 
     @staticmethod
     def _get_neural_config(document: Dict) -> NeuralConfig:
@@ -131,14 +142,17 @@ class NeuralModel(DataModel):
     def from_dict(document: Dict) -> NeuralModel:
         opt_props = document.get("optimisation_properties", None)
         opt_props = [OptimisationProperties.from_dict(props) for props in opt_props] if opt_props is not None else []
+        neural_props = document.get("neural_properties", None)
+        neural_props = NeuralProperties.from_dict(document["neural_properties"]) if neural_props is not None else None
         return NeuralModel(
             id=str(document["_id"]),
             function=document["function"],
             type=document["type"],
             neural_config=NeuralModel._get_neural_config(document),
-            neural_properties=NeuralProperties.from_dict(document["neural_properties"]),
+            expected_optimisations=document["expected_optimisations"],
+            model_data=document.get("model_data", None),
+            neural_properties=neural_props,
             optimisation_properties=opt_props,
-            model_data=document["model_data"],
             experiment_id=document.get("experiment_id", None)
         )
 
