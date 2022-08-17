@@ -68,10 +68,18 @@ class Estimator(BaseEstimator, RegressorMixin):
 
 if __name__ == '__main__':
     l1_reg_lambda = 0.005
-    est = Estimator(name="ackley", config=FeedforwardNeuralConfig(1E-6, 512, 240, 4, "ReLU"), epochs=200, l1_reg_lambda=l1_reg_lambda)
     container = init_container()
     sample_repo = container.sample_repository()
-    dataset = sample_repo.get("62dcc587ce0f41019d2d7d78").to_dataset()
+    neural_repo = container.neural_repository()
+    model = neural_repo.get("62e1a728517f400bb65f3cbd")
+    est = Estimator(
+        name=model.function,
+        config=model.neural_config,
+        epochs=200,
+        l1_reg_lambda=l1_reg_lambda
+    )
+    dataset_id = sample_repo.get_id_by_name(model.function)
+    dataset = sample_repo.get(dataset_id).to_dataset()
     x_train, y_train = dataset.train
     x_test, y_test = dataset.test
     trainer = est.fit(x_train, y_train)
