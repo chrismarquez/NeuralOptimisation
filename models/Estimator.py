@@ -67,7 +67,7 @@ class Estimator(BaseEstimator, RegressorMixin):
 
 
 if __name__ == '__main__':
-    l1_reg_lambda = 0.005
+    l1_reg_lambda = 0.0005
     container = init_container()
     sample_repo = container.sample_repository()
     neural_repo = container.neural_repository()
