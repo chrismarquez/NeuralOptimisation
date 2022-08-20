@@ -8,6 +8,10 @@ from cluster.SlurmJobStatus import SlurmJobStatus, SlurmJobState
 from cluster.WorkerPool import WorkerPool
 
 
+class SlurmFailureException(RuntimeError):
+    pass
+
+
 class SlurmPool(WorkerPool):
 
     @staticmethod
@@ -37,11 +41,15 @@ class SlurmPool(WorkerPool):
                 if status.job_state == SlurmJobState.COMPLETED:
                     await self._release_slot()
                     self.tasks.pop(future)
+                    future.set_result(True)
+                    break
+                elif status.job_state == SlurmJobState.FAILED:
+                    await self._release_slot()
+                    future.set_exception(SlurmFailureException())
                     break
             except KeyError:
                 pass
             await asyncio.sleep(3)
-        future.set_result(True)
 
     def job_type(self) -> JobType:
         return "GPU"
@@ -70,5 +78,3 @@ class SlurmPool(WorkerPool):
         file = f"{self.root_dir}/slurm20-{job_id}.out"
         with open(file) as f:
             return f.readlines()
-
-
