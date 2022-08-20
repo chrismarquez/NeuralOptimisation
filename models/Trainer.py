@@ -15,9 +15,14 @@ from models.FNN import FNN
 Batch = Tuple[torch.Tensor, torch.Tensor]
 
 
+class NanException(RuntimeError):
+    pass
+
+
 class Trainer:
 
-    def __init__(self, net: nn.Module, loss_fn=nn.MSELoss(), lr=1E-4, batch_size=128, l1_reg_lambda: Optional[float] = None):
+    def __init__(self, net: nn.Module, loss_fn=nn.MSELoss(), lr=1E-4, batch_size=128,
+                 l1_reg_lambda: Optional[float] = None):
         self._device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self._net = net.to(self._device).double()
         self._loss_fn = loss_fn
@@ -61,6 +66,8 @@ class Trainer:
         running_loss = 0.0
         for input_set, target_set in batches:
             running_loss += self._train_batch(input_set, target_set)
+        if np.isnan(running_loss):
+            raise NanException()
         return running_loss
 
     def _train_batch(self, input_set: torch.Tensor, target_set: torch.Tensor):

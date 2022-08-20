@@ -11,7 +11,7 @@ from models.CNN import CNN
 from models.FNN import FNN
 from models.LoadableModule import LoadableModule
 from models.Regressor import Regressor
-from models.Trainer import Trainer
+from models.Trainer import Trainer, NanException
 from repositories.db_models import FeedforwardNeuralConfig, NeuralProperties, NeuralConfig, ConvolutionalNeuralConfig
 
 LayerSize = int
@@ -71,17 +71,24 @@ if __name__ == '__main__':
     container = init_container()
     sample_repo = container.sample_repository()
     neural_repo = container.neural_repository()
-    model = neural_repo.get("62e1a728517f400bb65f3cbd")
+    model = neural_repo.get("62fcf647cc4b54de3c2efd5a") # '62fcf647cc4b54de3c2efd56'
     est = Estimator(
         name=model.function,
         config=model.neural_config,
-        epochs=200,
-        l1_reg_lambda=l1_reg_lambda
+        epochs=5000,
+        #l1_reg_lambda=l1_reg_lambda
     )
     dataset_id = sample_repo.get_id_by_name(model.function)
     dataset = sample_repo.get(dataset_id).to_dataset()
     x_train, y_train = dataset.train
     x_test, y_test = dataset.test
-    trainer = est.fit(x_train, y_train)
-    neural_props = est.score(x_test, y_test)
-    print(neural_props)
+    while True:
+        try:
+            trainer = est.fit(x_train, y_train)
+            neural_props = est.score(x_test, y_test)
+            print(neural_props)
+            break
+        except NanException as e:
+            model.neural_config.learning_rate *= 0.9
+            lr = "{:e}".format(model.neural_config.learning_rate)
+            print(f"New Learning Rate: {lr}")

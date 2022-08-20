@@ -88,7 +88,11 @@ class ExperimentExecutor:
         return ExpectedJobs(training, optimisation)
 
     async def _optimisation_pipe(self, completed_job: Job, model_task: Awaitable[bool]) -> List[Job]:
-        await model_task
+        success = await model_task
+        if not success:
+            if self.debug:
+                print(f"Model with id {completed_job.model_id} did not train properly. Skip Optimisation")
+            return []
         bounds = Bounds(0.2)
         model_id = completed_job.model_id
         model = self._neural_repo.get(model_id)
