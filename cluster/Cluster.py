@@ -73,9 +73,13 @@ class Cluster:
                 job_type = job.get_job_type()
                 await self.type_queues[job_type].put((future, job))
 
-    async def _on_complete(self, future: Future, pool_future: Awaitable):
-        result = await pool_future
-        future.set_result(result)
+    @staticmethod
+    async def _on_complete(future: Future, pool_future: Awaitable):
+        try:
+            result = await pool_future
+            future.set_result(result)
+        except RuntimeError as err:
+            future.set_exception(err)
 
     async def _request_kerberos_ticket(self):
         minutes = 60
