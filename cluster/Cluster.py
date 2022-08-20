@@ -18,8 +18,8 @@ class Cluster:
         self.debug = raw_debug == "True"
         self.pools: List[WorkerPool] = [
             SlurmPool(root_dir, capacity=2, debug=self.debug),
-            CondorPool(root_dir, capacity=40, condor_server=condor_server, config=CondorConfig(user, "CPU", self.debug)),
-            CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig(user, "GPU", self.debug))
+            CondorPool(root_dir, capacity=40, condor_server=condor_server, config=CondorConfig(user, "CPU", self.debug))
+            #CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig(user, "GPU", self.debug))
         ]
 
         print("[Cluster] Connecting to Shell Server.")
