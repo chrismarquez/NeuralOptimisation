@@ -73,8 +73,8 @@ class Cluster:
         try:
             result = await pool_future
             future.set_result(result)
-        except RuntimeError as e:
-            await self._reschedule_failed(future, job, e)
+        except RuntimeError:
+            future.set_result(False)
 
     async def _reschedule_failed(self, future: Future, job: Job, e: Exception):
         future.set_exception(e)
