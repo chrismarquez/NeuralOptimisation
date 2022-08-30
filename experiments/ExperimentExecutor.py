@@ -88,20 +88,24 @@ class ExperimentExecutor:
         return ExpectedJobs(training, optimisation)
 
     async def _optimisation_pipe(self, completed_job: Job, model_task: Awaitable[bool]) -> List[Job]:
-        await model_task
+        success = await model_task
+        if not success:
+            if self.debug:
+                print(f"Model with id {completed_job.model_id} did not train properly. Skip Optimisation")
+            return []
         bounds = Bounds(0.2)
         model_id = completed_job.model_id
         model = self._neural_repo.get(model_id)
         activation = model.neural_config.activation_fn
         return [OptimisationJob(model_id, bounds, solver) for solver in solvable_by(activation)]
 
-    def _get_initial_jobs(self, experiment: Experiment) -> List[ModelJob]:
-        experiment_exists = self._neural_repo.experiment_exists(experiment.exp_id)
+    def _get_initial_jobs(self, exp: Experiment) -> List[ModelJob]:
+        experiment_exists = self._neural_repo.experiment_exists(exp.exp_id)
         if not experiment_exists:
-            return self._init_experiment(experiment)
-        neural_models = self._neural_repo.get_all(experiment.exp_id)
-        neural_models = self._calculate_execution(neural_models, experiment)
-        return [ModelJob(model.id, model.neural_config, experiment.epochs) for model in neural_models]
+            return self._init_experiment(exp)
+        neural_models = self._neural_repo.get_all(exp.exp_id)
+        neural_models = self._calculate_execution(neural_models, exp)
+        return [ModelJob(model.id, model.neural_config, exp.epochs, exp.l1_reg_lambda) for model in neural_models]
 
     def _calculate_execution(self, neural_models: List[NeuralModel], experiment: Experiment) -> List[NeuralModel]:
         total_models = len(neural_models)
@@ -124,6 +128,7 @@ class ExperimentExecutor:
                     function=function_name,
                     type=config.get_neural_type(),
                     neural_config=config,
+                    l1_reg_lambda=exp.l1_reg_lambda,
                     expected_optimisations=len(solvable_by(config.activation_fn)),
                     experiment_id=exp.exp_id
                 ) for config in config_pool
@@ -132,6 +137,6 @@ class ExperimentExecutor:
                 models.set_description(f"Creating Experiment {exp.exp_id} models for function {function_name}")
                 for model in models:
                     model_id = self._neural_repo.save(model)
-                    job = ModelJob(model_id, model.neural_config, exp.epochs)
+                    job = ModelJob(model_id, model.neural_config, exp.epochs, l1_reg_lambda=exp.l1_reg_lambda)
                     jobs.append(job)
         return jobs

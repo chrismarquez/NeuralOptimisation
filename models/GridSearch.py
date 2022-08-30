@@ -1,7 +1,7 @@
 from typing import Sequence, Any, Dict, List
 
-from experiments.Polynomial import Polynomial
 from experiments.Experiment import NeuralType
+from experiments.Polynomial import Polynomial
 from repositories.db_models import FeedforwardNeuralConfig, ConvolutionalNeuralConfig, NeuralConfig
 
 
@@ -18,7 +18,7 @@ class GridSearch:
 
     def _get_fnn_sequence(self, hyper_params: Dict) -> Sequence[FeedforwardNeuralConfig]:
         param_list = list(hyper_params.items())
-        sequence = self._get_sequence(param_list)
+        sequence = GridSearch.get_perm_sequence(param_list)
         config_sequence = [
             {
                 "learning_rate": config["learning_rate"],
@@ -33,7 +33,7 @@ class GridSearch:
 
     def _get_cnn_sequence(self, hyper_params: Dict) -> Sequence[ConvolutionalNeuralConfig]:
         param_list = list(hyper_params.items())
-        sequence = self._get_sequence(param_list)
+        sequence = self.get_perm_sequence(param_list)
         config_sequence = [
             {
                 "learning_rate": config["learning_rate"],
@@ -59,12 +59,13 @@ class GridSearch:
         root = (polynomial - learnable_params).largest_root()
         return int(round(root))
 
-    def _get_sequence(self, params_list: List[Any]) -> Sequence[Dict]:
+    @staticmethod
+    def get_perm_sequence(params_list: List[Any]) -> Sequence[Dict]:
         if len(params_list) == 0:
             return []
         head, *tail = params_list
         name, values = head
-        tail_seq = self._get_sequence(tail)
+        tail_seq = GridSearch.get_perm_sequence(tail)
         head_seq = [{name: value} for value in values]
         if len(tail_seq) == 0:
             return head_seq
@@ -79,6 +80,6 @@ if __name__ == '__main__':
     from experiments.Experiment import Experiment, NeuralType
 
     search = GridSearch()
-    experiment = Experiment("test", "Convolutional")
-    seq = search.get_cnn_sequence(experiment.get_hyper_params())
+    experiment = Experiment("test", "Convolutional", 200, None)
+    seq = search._get_cnn_sequence(experiment.get_hyper_params())
     print(seq)

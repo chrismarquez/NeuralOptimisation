@@ -1,11 +1,15 @@
 import asyncio
 import subprocess
-from asyncio import Future
-from typing import List, Awaitable
+from asyncio import Future, Task
+from typing import List, Awaitable, Dict
 
 from cluster.Job import Job, JobType
 from cluster.SlurmJobStatus import SlurmJobStatus, SlurmJobState
 from cluster.WorkerPool import WorkerPool
+
+
+class SlurmFailureException(RuntimeError):
+    pass
 
 
 class SlurmPool(WorkerPool):
@@ -17,6 +21,7 @@ class SlurmPool(WorkerPool):
 
     def __init__(self, root_dir: str, capacity: int, debug: bool):
         super().__init__(capacity, root_dir)
+        self.tasks: Dict[Future, Task] = {}
         self.debug = debug
 
     async def submit(self, job: Job) -> Awaitable[bool]:
@@ -24,7 +29,7 @@ class SlurmPool(WorkerPool):
         loop = asyncio.get_running_loop()
         future = loop.create_future()
         task = self._post_process(future, slurm_job_id)
-        asyncio.create_task(task)
+        self.tasks[future] = asyncio.create_task(task)
         return future
 
     async def _post_process(self, future: Future[bool], slurm_job_id: int):
@@ -34,11 +39,17 @@ class SlurmPool(WorkerPool):
                 if self.debug:
                     print(f"Job Status {slurm_job_id}: {status}")
                 if status.job_state == SlurmJobState.COMPLETED:
+                    await self._release_slot()
+                    self.tasks.pop(future)
+                    future.set_result(True)
+                    break
+                elif status.job_state == SlurmJobState.FAILED:
+                    await self._release_slot()
+                    future.set_exception(SlurmFailureException())
                     break
             except KeyError:
                 pass
             await asyncio.sleep(3)
-        future.set_result(True)
 
     def job_type(self) -> JobType:
         return "GPU"
@@ -61,14 +72,9 @@ class SlurmPool(WorkerPool):
         cmd = f"scontrol show job <job_id>".replace("<job_id>", str(job_id))
         result = subprocess.run(cmd, shell=True, capture_output=True)
         output = result.stdout.decode("utf-8")
-        status = SlurmJobStatus.from_log(output)
-        if status.job_state == SlurmJobState.COMPLETED:
-            await self._release_slot()
-        return status
+        return SlurmJobStatus.from_log(output)
 
     def get_job_output(self, job_id: int) -> List[str]:
         file = f"{self.root_dir}/slurm20-{job_id}.out"
         with open(file) as f:
             return f.readlines()
-
-

@@ -116,6 +116,7 @@ class NeuralModel(DataModel):
     type: NeuralType
     neural_config: NeuralConfig
     expected_optimisations: int
+    l1_reg_lambda: Optional[float]
     model_data: Optional[bytes] = None
     neural_properties: Optional[NeuralProperties] = None
     optimisation_properties: List[OptimisationProperties] = field(default_factory=list)
@@ -149,6 +150,7 @@ class NeuralModel(DataModel):
             function=document["function"],
             type=document["type"],
             neural_config=NeuralModel._get_neural_config(document),
+            l1_reg_lambda=document["l1_reg_lambda"],
             expected_optimisations=document["expected_optimisations"],
             model_data=document.get("model_data", None),
             neural_properties=neural_props,

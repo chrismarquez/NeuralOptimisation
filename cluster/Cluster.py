@@ -18,8 +18,8 @@ class Cluster:
         self.debug = raw_debug == "True"
         self.pools: List[WorkerPool] = [
             SlurmPool(root_dir, capacity=2, debug=self.debug),
-            CondorPool(root_dir, capacity=40, condor_server=condor_server, config=CondorConfig(user, "CPU", self.debug)),
-            CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig(user, "GPU", self.debug))
+            CondorPool(root_dir, capacity=40, condor_server=condor_server, config=CondorConfig(user, "CPU", self.debug))
+            #CondorPool(root_dir, capacity=25, condor_server=condor_server, config=CondorConfig(user, "GPU", self.debug))
         ]
 
         print("[Cluster] Connecting to Shell Server.")
@@ -64,18 +64,24 @@ class Cluster:
             (future, job) = await queue.get()
             try:
                 pool_future = await pool.submit(job)
-                task = self._on_complete(future, pool_future)
+                task = self._on_complete(future, job, pool_future)
                 asyncio.create_task(task)
             except RuntimeError as e:
-                future.set_exception(e)
-                if self.debug:
-                    print(f"Failed Job {job.uuid} with model {job.model_id}. Adding to queue again")
-                job_type = job.get_job_type()
-                await self.type_queues[job_type].put((future, job))
+                await self._reschedule_failed(future, job, e)
 
-    async def _on_complete(self, future: Future, pool_future: Awaitable):
-        result = await pool_future
-        future.set_result(result)
+    async def _on_complete(self, future: Future, job: Job, pool_future: Awaitable):
+        try:
+            result = await pool_future
+            future.set_result(result)
+        except RuntimeError:
+            future.set_result(False)
+
+    async def _reschedule_failed(self, future: Future, job: Job, e: Exception):
+        future.set_exception(e)
+        if self.debug:
+            print(f"Failed Job {job.uuid} with model {job.model_id}. Adding to queue again")
+        job_type = job.get_job_type()
+        await self.type_queues[job_type].put((future, job))
 
     async def _request_kerberos_ticket(self):
         minutes = 60

@@ -10,7 +10,7 @@ from cluster.JobInit import init_container
 
 T = TypeVar('T')
 
-Submit = Callable[[Job], Awaitable[Task]]
+Submit = Callable[[Job], Awaitable[Task[bool]]]
 Pipe = Callable[[Job, Task], Awaitable[List[Job]]]
 
 
@@ -109,7 +109,6 @@ class Pipeline:
             await first_segment.enqueue(job)
         if self.debug:
             print("All jobs are enqueued in pipeline")
-
 
     def _spawn_reporters(self) -> List[Task]:
         return [
